@@ -1,0 +1,166 @@
+sample_id,ref_skin,ref_gut,site,sponge_id,risor_id,sponge_spp,date,latitude,longitude,depth,risor_weight,risor_tl,type
+IBEL022,SBEL020,RBEL017,golden reef,GOL_9,27,Ircinia strobilina,17-Jul-23,16.8095493,-88.085503,6.1,0.085,19.46,sponge
+IBEL025,SBEL021,RBEL018,golden reef,GOL_10,28,Ircinia campana,17-Jul-23,16.8096333,-88.085365,5.5,0.017,11.71,sponge
+IBEL028,SBEL023,RBEL020,golden reef,GOL_11,30,Ircinia campana,17-Jul-23,16.8095837,-88.085632,5.4,0.088,19.27,sponge
+IBEL043,SBEL033,RBEL023,golden reef,GOL_16,47,Ircinia campana,18-Jul-23,16.8095169,-88.085587,7.8,0.049,16,sponge
+IBEL058,SBEL043,RBEL027,golden reef,GOL_21,58,Ircinia ruetzleri,18-Jul-23,16.8094501,-88.085403,8.5,0.066,17.77,sponge
+IBEL064,SBEL046,RBEL029,golden reef,GOL_23,61,Ircinia campana,19-Jul-23,16.8090668,-88.085915,6.6,0.028,15.02,sponge
+IBEL065,SBEL047,RBEL030,golden reef,GOL_24,62,Ircinia campana,19-Jul-23,16.8090992,-88.086052,6.6,0.047,16.14,sponge
+IBEL070,SBEL054,RBEL031,golden reef,GOL_29,69,Ircinia campana,19-Jul-23,16.8089676,-88.086334,4.9,0.026,13.67,sponge
+IBEL073,SBEL057,RBEL034,golden reef,GOL_32,72,Ircinia campana,20-Jul-23,16.8096676,-88.085701,7.5,0.09,19.45,sponge
+IBEL074,SBEL058,RBEL035,golden reef,GOL_33,73,Ircinia campana,20-Jul-23,16.8096008,-88.085617,8.5,0.065,17.71,sponge
+IBEL075,SBEL061,RBEL038,golden reef,GOL_34,76,Ircinia felix,20-Jul-23,16.8096008,-88.085602,8.5,0.082,18.66,sponge
+IBEL078,SBEL067,RBEL044,golden reef,GOL_37,82,Ircinia felix,20-Jul-23,16.8095341,-88.085716,8.4,0.023,13.06,sponge
+IBEL080,SBEL069,RBEL045,golden reef,GOL_39,84,Ircinia felix,20-Jul-23,16.8090324,-88.086304,4.8,0.024,13.13,sponge
+IBEL081,SBEL070,RBEL046,golden reef,GOL_40,85,Ircinia campana,20-Jul-23,16.809,-88.086304,4.4,0.078,17.99,sponge
+IBEL086,SBEL080,RBEL048,grunt reef,GRU_01,95,Ircinia ruetzleri,21-Jul-23,16.8096676,-88.086197,5.6,0.07,17.84,sponge
+IBEL089,SBEL083,RBEL051,grunt reef,GRU_04,98,Ircinia felix,21-Jul-23,16.8097324,-88.086235,6.3,0.03,14.24,sponge
+IBEL090,SBEL085,RBEL053,grunt reef,GRU_05,101,Ircinia felix,21-Jul-23,16.8097496,-88.08622,6.5,0.018,10.95,sponge
+IBEL091,SBEL086,RBEL054,grunt reef,GRU_06,102,Ircinia campana,21-Jul-23,16.8096828,-88.086098,7.9,0.038,14.112,sponge
+IBEL092,SBEL087,RBEL055,grunt reef,GRU_07,103,Ircinia felix,21-Jul-23,16.8096333,-88.086098,7.8,0.066,18.05,sponge
+IBEL093,SBEL088,RBEL056,grunt reef,GRU_08,104,Ircinia campana,21-Jul-23,16.8096333,-88.086151,6.6,0.036,14.13,sponge
+IBEL096,SBEL094,RBEL059,golden reef,GOL_46,114,Ircinia felix,21-Jul-23,16.8095169,-88.085564,8.2,0.034,15.67,sponge
+IBEL098,SBEL096,RBEL061,golden reef,GOL_48,116,Ircinia felix,21-Jul-23,16.8094673,-88.085587,8.3,0.029,14.14,sponge
+IBEL099,SBEL097,RBEL062,golden reef,GOL_49,117,Ircinia strobilina,21-Jul-23,16.8094997,-88.085449,8.4,0.02,11.94,sponge
+IBEL105,SBEL107,RBEL068,grunt reef,GRU_13,131,Ircinia ruetzleri,22-Jul-23,16.8097992,-88.086266,7.3,0.034,14.64,sponge
+IBEL109,SBEL116,RBEL070,grunt reef,GRU_17,154,Ircinia campana,22-Jul-23,16.8096008,-88.086365,7,0.083,20.28,sponge
+IBEL110,SBEL119,RBEL073,grunt reef,GRU_18,157,Ircinia campana,22-Jul-23,16.8095493,-88.086266,7.7,0.096,19.58,sponge
+IBEL111,SBEL121,RBEL075,grunt reef,GRU_19,159,Ircinia campana,22-Jul-23,16.8095665,-88.08622,7.7,0.018,13.41,sponge
+IBEL112,SBEL122,RBEL076,grunt reef,GRU_20,160,Ircinia felix,22-Jul-23,16.8097,-88.086082,8.4,0.059,16.39,sponge
+IBEL116,SBEL128,RBEL082,golden reef,GOL_54,166,Ircinia campana,24-Jul-23,16.8090172,-88.086517,7.4,0.035,14.21,sponge
+IBEL117,SBEL129,RBEL083,golden reef,GOL_55,167,Ircinia felix,24-Jul-23,16.8090324,-88.08622,6.2,0.084,18.56,sponge
+IBEL118,SBEL131,RBEL085,golden reef,GOL_56,169,Ircinia felix,24-Jul-23,16.8090496,-88.086151,5.8,0.025,14.26,sponge
+IBEL119,SBEL133,RBEL087,golden reef,GOL_57,171,Ircinia felix,24-Jul-23,16.8090496,-88.086136,5.4,0.082,19.4,sponge
+IBEL121,SBEL135,RBEL089,grunt reef,GRU_22,173,Ircinia campana,25-Jul-23,16.8097172,-88.086304,5.8,0.05,14.54,sponge
+IBEL122,SBEL136,RBEL090,grunt reef,,,,,,,,,,
+IBEL123,SBEL137,RBEL091,grunt reef,GRU_26,178,Ircinia felix,25-Jul-23,16.8097,-88.086136,6.9,0.009,11.76,sponge
+IBEL124,SBEL138,RBEL092,grunt reef,GRU_27,179,Ircinia felix,25-Jul-23,16.8097172,-88.086113,7.5,0.103,19.58,sponge
+IBEL125,SBEL139,RBEL093,grunt reef,GRU_28,181,Ircinia felix,25-Jul-23,16.8097324,-88.086166,6.7,0.049,17.33,sponge
+IBEL126,SBEL140,RBEL094,grunt reef,GRU_29,185,Ircinia felix,25-Jul-23,16.8097668,-88.086281,7.3,0.039,14.06,sponge
+IBEL127,SBEL141,RBEL095,grunt reef,GRU_30,186,Ircinia felix,25-Jul-23,16.8097496,-88.08625,6.7,0.057,16.52,sponge
+IBEL128,SBEL142,RBEL096,grunt reef,GRU_31,189,Ircinia felix,25-Jul-23,16.8097324,-88.086266,6,0.024,13.47,sponge
+IBEL130,SBEL144,RBEL098,long reef,LON_01,192,Ircinia felix,25-Jul-23,16.7655163,-88.077652,5.7,0.077,18.13,sponge
+IBEL132,SBEL146,RBEL100,long reef,LON_03,196,Ircinia felix,25-Jul-23,16.765583,-88.07753,6.5,0.055,16.16,sponge
+IBEL135,SBEL148,RBEL102,long reef,LON_06,202,Ircinia felix,26-Jul-23,16.7653999,-88.077698,6.4,0.056,13.07,sponge
+IBEL136,SBEL149,RBEL103,long reef,LON_07,206,Ircinia felix,26-Jul-23,16.7653675,-88.077484,6.4,0.052,16.1,sponge
+RBEL018,SBEL021,NA,golden reef,GOL_10,28,NA,17-Jul-23,16.8096333,-88.085365,5.5,0.017,11.71,Risor gut
+RBEL020,SBEL023,NA,golden reef,GOL_11,30,NA,17-Jul-23,16.8095837,-88.085632,5.4,0.088,19.27,Risor gut
+RBEL023,SBEL033,NA,golden reef,GOL_16,47,NA,18-Jul-23,16.8095169,-88.085587,7.8,0.049,16,Risor gut
+RBEL027,SBEL043,NA,golden reef,GOL_21,58,NA,18-Jul-23,16.8094501,-88.085403,8.5,0.066,17.77,Risor gut
+RBEL029,SBEL046,NA,golden reef,GOL_23,61,NA,19-Jul-23,16.8090668,-88.085915,6.6,0.028,15.02,Risor gut
+RBEL030,SBEL047,NA,golden reef,GOL_24,62,NA,19-Jul-23,16.8090992,-88.086052,6.6,0.047,16.14,Risor gut
+RBEL031,SBEL054,NA,golden reef,GOL_29,69,NA,19-Jul-23,16.8089676,-88.086334,4.9,0.026,13.67,Risor gut
+RBEL035,SBEL058,,,,,,,,,,,,
+RBEL040,SBEL063,NA,golden reef,GOL_35,78,NA,20-Jul-23,16.8096504,-88.08567,8.1,0.034,13.52,Risor gut
+RBEL045,SBEL069,NA,golden reef,GOL_39,84,NA,20-Jul-23,16.8090324,-88.086304,4.8,0.024,13.13,Risor gut
+RBEL046,SBEL070,NA,golden reef,GOL_40,85,NA,20-Jul-23,16.809,-88.086304,4.4,0.078,17.99,Risor gut
+RBEL048,SBEL080,NA,grunt reef,GRU_01,95,NA,21-Jul-23,16.8096676,-88.086197,5.6,0.07,17.84,Risor gut
+RBEL051,SBEL083,NA,grunt reef,GRU_04,98,NA,21-Jul-23,16.8097324,-88.086235,6.3,0.03,14.24,Risor gut
+RBEL059,SBEL094,NA,golden reef,GOL_46,114,Ircinia felix,21-Jul-23,16.8095169,-88.085564,8.2,0.034,15.67,Risor gut
+RBEL061,SBEL096,NA,golden reef,GOL_48,116,Ircinia felix,21-Jul-23,16.8094673,-88.085587,8.3,0.029,14.14,Risor gut
+RBEL068,SBEL107,NA,grunt reef,GRU_13,131,Ircinia ruetzleri,22-Jul-23,16.8097992,-88.086266,7.3,0.034,14.64,Risor gut
+RBEL070,,,,,,,,,,,,,
+RBEL073,SBEL119,NA,grunt reef,GRU_18,157,Ircinia campana,22-Jul-23,16.8095493,-88.086266,7.7,0.096,19.58,Risor gut
+RBEL075,,,,,,,,,,,,,
+RBEL076,,,,,,,,,,,,,
+RBEL083,SBEL129,NA,golden reef,GOL_55,167,Ircinia felix,24-Jul-23,16.8090324,-88.08622,6.2,0.084,18.56,Risor gut
+RBEL089,,,,,,,,,,,,,
+RBEL090,,,,,,,,,,,,,
+RBEL091,,,,,,,,,,,,,
+RBEL092,SBEL138,NA,grunt reef,GRU_27,179,Ircinia felix,25-Jul-23,16.8097172,-88.086113,7.5,0.103,19.58,Risor gut
+RBEL094,SBEL140,NA,grunt reef,GRU_29,185,Ircinia felix,25-Jul-23,16.8097668,-88.086281,7.3,0.039,14.06,Risor gut
+RBEL098,SBEL144,NA,long reef,LON_01,192,Ircinia felix,25-Jul-23,16.7655163,-88.077652,5.7,0.077,18.13,Risor gut
+RBEL102,,,,,,,,,,,,,
+RBEL103,,,,,,,,,,,,,
+SBEL020,IBEL022,NA,golden reef,GOL_9,27,Ircinia strobilina,17-Jul-23,16.8095493,-88.085503,6.1,0.085,19.46,Risor skin
+SBEL021,IBEL025,NA,golden reef,GOL_10,28,Ircinia campana,17-Jul-23,16.8096333,-88.085365,5.5,0.017,11.71,Risor skin
+SBEL023,IBEL028,NA,golden reef,GOL_11,30,Ircinia campana,17-Jul-23,16.8095837,-88.085632,5.4,0.088,19.27,Risor skin
+SBEL033,IBEL043,NA,golden reef,GOL_16,47,Ircinia campana,18-Jul-23,16.8095169,-88.085587,7.8,0.049,16,Risor skin
+SBEL043,IBEL058,NA,golden reef,GOL_21,58,Ircinia ruetzleri,18-Jul-23,16.8094501,-88.085403,8.5,0.066,17.77,Risor skin
+SBEL046,IBEL064,NA,golden reef,GOL_23,61,Ircinia campana,19-Jul-23,16.8090668,-88.085915,6.6,0.028,15.02,Risor skin
+SBEL047,IBEL065,NA,golden reef,GOL_24,62,Ircinia campana,19-Jul-23,16.8090992,-88.086052,6.6,0.047,16.14,Risor skin
+SBEL057,IBEL073,NA,golden reef,GOL_32,72,Ircinia campana,20-Jul-23,16.8096676,-88.085701,7.5,0.09,19.45,Risor skin
+SBEL058,IBEL074,NA,golden reef,GOL_33,73,Ircinia campana,20-Jul-23,16.8096008,-88.085617,8.5,0.065,17.71,Risor skin
+SBEL063,IBEL076,NA,golden reef,GOL_35,78,Ircinia ruetzleri,20-Jul-23,16.8096504,-88.08567,8.1,0.034,13.52,Risor skin
+SBEL067,IBEL078,NA,golden reef,GOL_37,82,Ircinia felix,20-Jul-23,16.8095341,-88.085716,8.4,0.023,13.06,Risor skin
+SBEL069,IBEL080,NA,golden reef,GOL_39,84,Ircinia felix,20-Jul-23,16.8090324,-88.086304,4.8,0.024,13.13,Risor skin
+SBEL070,IBEL081,NA,golden reef,GOL_40,85,Ircinia campana,20-Jul-23,16.809,-88.086304,4.4,0.078,17.99,Risor skin
+SBEL083,IBEL089,NA,grunt reef,GRU_04,98,Ircinia felix,21-Jul-23,16.8097324,-88.086235,6.3,0.03,14.24,Risor skin
+SBEL085,,,,,,,,,,,,,
+SBEL086,,,,,,,,,,,,,
+SBEL087,IBEL092,NA,grunt reef,GRU_07,103,Ircinia felix,21-Jul-23,16.8096333,-88.086098,7.8,0.066,18.05,Risor skin
+SBEL088,,,,,,,,,,,,,
+SBEL094,IBEL096,NA,golden reef,GOL_46,114,Ircinia felix,21-Jul-23,16.8095169,-88.085564,8.2,0.034,15.67,Risor skin
+SBEL096,IBEL098,NA,golden reef,GOL_48,116,Ircinia felix,21-Jul-23,16.8094673,-88.085587,8.3,0.029,14.14,Risor skin
+SBEL097,,,,,,,,,,,,,
+SBEL107,IBEL105,NA,grunt reef,GRU_13,131,Ircinia ruetzleri,22-Jul-23,16.8097992,-88.086266,7.3,0.034,14.64,Risor skin
+SBEL116,,,,,,,,,,,,,
+SBEL119,,,,,,,,,,,,,
+SBEL121,IBEL111,NA,grunt reef,GRU_19,159,Ircinia campana,22-Jul-23,16.8095665,-88.08622,7.7,0.018,13.41,Risor skin
+SBEL122,IBEL112,NA,grunt reef,GRU_20,160,Ircinia felix,22-Jul-23,16.8097,-88.086082,8.4,0.059,16.39,Risor skin
+SBEL128,IBEL116,NA,golden reef,GOL_54,166,Ircinia campana,24-Jul-23,16.8090172,-88.086517,7.4,0.035,14.21,Risor skin
+SBEL129,IBEL117,NA,golden reef,GOL_55,167,Ircinia felix,24-Jul-23,16.8090324,-88.08622,6.2,0.084,18.56,Risor skin
+SBEL133,IBEL119,NA,golden reef,GOL_57,171,Ircinia felix,24-Jul-23,16.8090496,-88.086136,5.4,0.082,19.4,Risor skin
+SBEL135,IBEL121,NA,grunt reef,GRU_22,173,Ircinia campana,25-Jul-23,16.8097172,-88.086304,5.8,0.05,14.54,Risor skin
+SBEL136,,,,,,,,,,,,,
+SBEL137,IBEL123,NA,grunt reef,GRU_26,178,Ircinia felix,25-Jul-23,16.8097,-88.086136,6.9,0.009,11.76,Risor skin
+SBEL138,IBEL124,NA,grunt reef,GRU_27,179,Ircinia felix,25-Jul-23,16.8097172,-88.086113,7.5,0.103,19.58,Risor skin
+SBEL140,IBEL126,NA,grunt reef,GRU_29,185,Ircinia felix,25-Jul-23,16.8097668,-88.086281,7.3,0.039,14.06,Risor skin
+SBEL141,IBEL127,NA,grunt reef,GRU_30,186,Ircinia felix,25-Jul-23,16.8097496,-88.08625,6.7,0.057,16.52,Risor skin
+SBEL142,IBEL128,NA,grunt reef,GRU_31,189,Ircinia felix,25-Jul-23,16.8097324,-88.086266,6,0.024,13.47,Risor skin
+SBEL144,IBEL130,NA,long reef,LON_01,192,Ircinia felix,25-Jul-23,16.7655163,-88.077652,5.7,0.077,18.13,Risor skin
+SBEL146,IBEL132,NA,long reef,LON_03,196,Ircinia felix,25-Jul-23,16.765583,-88.07753,6.5,0.055,16.16,Risor skin
+SBEL148,IBEL135,NA,long reef,LON_06,202,Ircinia felix,26-Jul-23,16.7653999,-88.077698,6.4,0.056,13.07,Risor skin
+SBEL149,IBEL136,NA,long reef,LON_07,206,Ircinia felix,26-Jul-23,16.7653675,-88.077484,6.4,0.052,16.1,Risor skin
+SRR8735200,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735201,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735202,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735203,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735204,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735205,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735206,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735207,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735208,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735209,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735210,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735211,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735212,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735213,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735214,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735215,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735216,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735217,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735218,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735219,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735220,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735221,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735222,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735223,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735224,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735225,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735226,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735227,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735228,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735229,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735230,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735231,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735232,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735233,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735234,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735235,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735236,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735237,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735238,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735239,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735240,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735241,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos gut
+SRR8735242,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735243,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735244,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+SRR8735245,NA,NA,Barbados,NA,0,NA,NA,0,0,0,0,0,E.prochilos skin
+sea_1,NA,NA,cbc,NA,0,NA,NA,0,0,0,0,0,seawater
+sea_2,NA,NA,cbc,NA,0,NA,NA,0,0,0,0,0,seawater
+sea_3,NA,NA,cbc,NA,0,NA,NA,0,0,0,0,0,seawater
+sea_4,NA,NA,cbc,NA,0,NA,NA,0,0,0,0,0,seawater
+sea_5,NA,NA,cbc,NA,0,NA,NA,0,0,0,0,0,seawater
+sea_6,NA,NA,cbc,NA,0,NA,NA,0,0,0,0,0,seawater
