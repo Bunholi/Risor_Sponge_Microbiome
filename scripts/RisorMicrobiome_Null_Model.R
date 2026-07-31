@@ -1,3 +1,11 @@
+######################################################################
+################# Risor microbiome project ###########################
+########### DATA Analyses - Null Model (Figure 3) ###################
+#####################################################################
+
+#Updated by: Ingrid Bunholi
+#Date: 07/15/26
+
 library(tidyverse)
 library(devtools)
 library(ComplexHeatmap)
@@ -7,31 +15,58 @@ library(ggnewscale)
 library(bipartite)
 library(patchwork)
 
-######################################################################
-################# Risor microbiome project ###########################
-########### DATA Analyses - Null Model (Figure 3) ###################
-#####################################################################
+#### Environment set up and data loading ####
+setwd("~/Desktop/Risor_microbiome_paper/Risor_Sponge_Microbiome/metadata") #your working directory
 
-setwd("User/workingdirectory") #your working directory
+# Risor + sponge, bacterial ASVs
+physeq.asv.bacteria.rs <- readRDS(
+  "processed_objects/physeq.asv.bacteria.rs.rds")
 
-# Load data
-asv_table <- read.table("genus.filtered.50ab.original.csv", header = TRUE, row.names = 1, sep = ",")
-metadata <- read.table("metadata_filtered_all_5000.csv", header = TRUE, sep = ",")
+physeq_null<- physeq.asv.bacteria.rs
 
-#asv_table <- read.table("genus.filtered.50ab.5000.csv", header = TRUE, row.names = 1, sep = ",")
-#metadata <- read.table("metadata_filtered_all_5000_nm.csv", header = TRUE, sep = ",")
+rare_depth<- 5000
 
-# Transpose ASV table
-asv_table <- t(asv_table)
+physeq_null_rare <- prune_samples(
+  sample_sums(physeq_null) >= rare_depth,
+  physeq_null
+)
 
-# Check that rownames of ASV table match metadata
-all(rownames(asv_table) %in% metadata$sample_id)  # Should be TRUE
+physeq_null_rare <- prune_taxa(taxa_sums(physeq_null_rare) > 0, physeq_null_rare)
+#95 samples
+
+sample_sums(physeq_null_rare)
+set.seed(123)
+
+physeq_null_rare <- rarefy_even_depth(
+  physeq_null_rare,
+  sample.size = rare_depth,
+  rngseed = 123,
+  replace = FALSE,
+  trimOTUs = TRUE,
+  verbose = TRUE
+)
+
+# Extract metadata
+metadata <- data.frame(sample_data(physeq_null_rare)) %>%
+  rownames_to_column("sample_id")
+
+# Extract ASV table
+asv_table <- as(otu_table(physeq_null_rare), "matrix")
+
+# Make sure samples are rows and ASVs are columns
+if (taxa_are_rows(physeq_null_rare)) {
+  asv_table <- t(asv_table)
+}
+
+# Check that rownames match metadata sample IDs
+all(rownames(asv_table) %in% metadata$sample_id)
 
 # Binarize ASV data
 asv_bin <- (asv_table > 0) * 1
 
-# Compute shared taxa matrix (samples x samples)
+# Compute shared ASV matrix: sample x sample
 shared_taxa_matrix <- asv_bin %*% t(asv_bin)
+
 
 ####Custom fully random null model####
 
@@ -47,45 +82,29 @@ ifallsame <- function(y){
   return (y)
 }
 
-#null - gives each cell a 50/50 chance of being a 1
-nullmod <- function(y){
-  for(i in 1:nrow(y)){ 
-    for(j in 1:ncol(y)){ 
-      y[i,j] <- sample(0:1,1)  # default p = 0.5
-    }
-  }
-  ifallsame(y)
-  return (y) 
-}
-
+# Null model: each cell has probability = prob of being assigned 1
 nullmod <- function(y, prob = 0.5) {
-  for (i in 1:nrow(y)) { 
-    for (j in 1:ncol(y)) { 
-      y[i, j] <- sample(0:1, 1, prob = c(1 - prob, prob))
+  for (i in 1:nrow(y)) {
+    for (j in 1:ncol(y)) {
+      y[i, j] <- sample(
+        0:1,
+        1,
+        prob = c(1 - prob, prob)
+      )
     }
   }
   ifallsame(y)
   return(y)
 }
 
-# Generate 1000 null matrices
-make.null <- function(x){
-  l <- list()
-  for (i in 1:1000){ 
-    mat <- x
-    l[[i]] <- nullmod(mat)
-  }
-  return (l)
-}
-
+# Generate null matrices
 make.null <- function(x, n = 1000, prob = 0.5) {
   l <- vector("list", n)
-  for (i in 1:n) { 
+  for (i in 1:n) {
     l[[i]] <- nullmod(x, prob = prob)
   }
   return(l)
 }
-
 
 
 #### Risor skin - Figure 3A ####
@@ -137,18 +156,18 @@ null_total_p30_skin <- sapply(null_list_p30_skin, sum)
 p_val_p30 <- mean(null_total_p30_skin >= obs_total_links_skin)
 
 null_total_p50_skin <- sapply(null_list_p50_skin, sum)
-p_val_p50 <- mean(null_total_p50_skin >= obs_total_links_skin)
+p_val_p50_skin <- (sum(null_total_p50_skin >= obs_total_links_skin) + 1) /
+  (length(null_total_p50_skin) + 1) #p = 0.00099
 
-mean(null_total_links_skin)
 
 #Plot with Wang's function - Figure 3A
 plot_links_skin05 <- ggplot(data.frame(Null = null_total_p50_skin), aes(x = Null)) +
   geom_density(fill = "#DDCC77", alpha = 0.5) +
   geom_vline(xintercept = obs_total_links_skin, linetype = "dashed", color = "red") +
-  labs(title = "R. ruber skin and sponge", x = "Number of Links (p = 0.5)", y = "Density")+
+  labs(x = "Number of Links (p = 0.5)", y = "Density")+
   annotate("text", x = obs_total_links_skin, y = 0,
            label = paste0("Observed = ", obs_total_links_skin,
-                          "\nP = ", round(p_val_p50, 3)),
+                          "\nP = ", round(p_val_p50_skin, 3)),
            hjust = 0, vjust = -1.5, fontface = "bold", size = 4, color = "black")+
   theme_bw()
 
@@ -207,14 +226,16 @@ null_total_p30_gut <- sapply(null_list_p30_gut, sum)
 p_val_p30 <- mean(null_total_p30_gut >= obs_total_links_gut)
 
 null_total_p50_gut <- sapply(null_list_p50_gut, sum)
-p_val_p50 <- mean(null_total_p50_gut >= obs_total_links_gut)
+
+p_val_p50_gut <- (sum(null_total_p50_gut >= obs_total_links_gut) + 1) /
+  (length(null_total_p50_gut) + 1) #p = 0.00099
 
 
 #Plot with Wang's function
-plot_links_gut05 <- ggplot(data.frame(Null = null_total_p30_gut), aes(x = Null)) +
+plot_links_gut05 <- ggplot(data.frame(Null = null_total_p50_gut), aes(x = Null)) +
   geom_density(fill = "#44AA99", alpha = 0.5) +
   geom_vline(xintercept = obs_total_links_gut, linetype = "dashed", color = "red") +
-  labs(title = "R. ruber gut and sponge", x = "Number of Links (p = 0.5)", y = "Density")+
+  labs(x = "Number of Links (p = 0.5)", y = "Density")+
   annotate("text", x = obs_total_links_gut, y = 0,
            label = paste0("Observed = ", obs_total_links_gut,
                           "\nP = ", round(p_val_p50, 3)),
@@ -224,165 +245,100 @@ plot_links_gut05 <- ggplot(data.frame(Null = null_total_p30_gut), aes(x = Null))
 plot_links_gut05 #Wang's function
 
 
-#### E. prochilos skin - Figure 3C ####
-# Get sample IDs
-e.skin_ids <- metadata %>% filter(type == "E.prochilos skin") %>% pull(sample_id)
-sponge_ids <- metadata %>% filter(type == "sponge") %>% pull(sample_id)
+#Checking metrics
 
-# All combinations of fish and sponge pairs
-fish_sponge_pairs_e.skin <- tidyr::crossing(
-  Fish_skin = e.skin_ids,
-  Sponge = sponge_ids
-)
+range(interaction_matrix_gut)
+table(as.vector(interaction_matrix_gut))
 
-# Use rowwise() to compute shared taxa for each pair
-fish_sponge_pairs_e.skin <- fish_sponge_pairs_e.skin %>%
-  rowwise() %>%
-  mutate(SharedTaxa = shared_taxa_matrix[Fish_skin, Sponge]) %>%
-  ungroup()
+range(interaction_matrix_skin)
+table(as.vector(interaction_matrix_skin))
 
-# Generate all unpaired combinations
-fish_sponge_pairs_e.skin <- fish_sponge_pairs_e.skin %>%
-  mutate(Link = ifelse(SharedTaxa >= 5, 1, 0))
+nrow(interaction_matrix_skin) * ncol(interaction_matrix_skin)
+sum(interaction_matrix_skin)
 
-#Build binary interaction matrix (Sponge as rows, Fish as columns)
-interaction_matrix_e.skin <- fish_sponge_pairs_e.skin %>%
-  group_by(Sponge, Fish_skin) %>%
-  summarise(Link = max(Link), .groups = "drop") %>%
-  pivot_wider(names_from = Fish_skin, values_from = Link, values_fill = list(Link = 0)) %>%
-  column_to_rownames(var = "Sponge") %>%
-  as.matrix()
+nrow(interaction_matrix_gut) * ncol(interaction_matrix_gut)
+sum(interaction_matrix_gut)
 
-#Compute observed metrics
-obs_total_links_e.skin <- sum(interaction_matrix_e.skin)
+summary(fish_sponge_pairs_skin$SharedTaxa)
+summary(fish_sponge_pairs_gut$SharedTaxa)
 
-#Wang's function
-#null_list_e.skin<- make.null(interaction_matrix_e.skin)
-#null_total_links_e.skin <- sapply(null_list_e.skin, sum)
-#p_val_links_e.skin <- mean(null_total_links_e.skin >= sum(interaction_matrix_e.skin))
-#mean(null_total_links_e.skin)
+quantile(fish_sponge_pairs_skin$SharedTaxa, probs = c(0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1))
+quantile(fish_sponge_pairs_gut$SharedTaxa, probs = c(0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1))
 
-null_list_p10_e.skin <- make.null(interaction_matrix_e.skin, n = 1000, prob = 0.1)
-null_list_p20_e.skin <- make.null(interaction_matrix_e.skin, n = 1000, prob = 0.2)
-null_list_p30_e.skin <- make.null(interaction_matrix_e.skin, n = 1000, prob = 0.3)
-null_list_p50_e.skin <- make.null(interaction_matrix_e.skin, n = 1000, prob = 0.5)
+threshold_summary <- function(pair_data) {
+  thresholds <- c(1, 2, 3, 5, 10)
+  
+  data.frame(
+    threshold = thresholds,
+    links = sapply(thresholds, function(th) sum(pair_data$SharedTaxa >= th)),
+    total_pairs = nrow(pair_data)
+  ) %>%
+    mutate(proportion_links = links / total_pairs)
+}
 
-null_total_p10_e.skin <- sapply(null_list_p10_e.skin, sum)
-p_val_p10 <- mean(null_total_p10_e.skin >= obs_total_links_e.skin)
-
-null_total_p20_e.skin <- sapply(null_list_p20_e.skin, sum)
-p_val_p20 <- mean(null_total_p20_e.skin >= obs_total_links_e.skin)
-
-null_total_p30_e.skin<- sapply(null_list_p30_e.skin, sum)
-p_val_p30 <- mean(null_total_p30_e.skin >= obs_total_links_e.skin)
-
-null_total_p50_e.skin<- sapply(null_list_p50_e.skin, sum)
-p_val_p50 <- mean(null_total_p50_e.skin >= obs_total_links_e.skin)
-
-
-#Plot with Wang's function
-plot_links_e.skin <- ggplot(data.frame(Null = null_total_p10_e.skin), aes(x = Null)) +
-  geom_density(fill = "#B8887A", alpha = 0.5) +
-  geom_vline(xintercept = obs_total_links_e.skin, linetype = "dashed", color = "red") +
-  labs(title = "E. prochilos skin and sponge", x = "Number of Links (p = 0.1)", y = "Density")+
-  annotate("text", x = obs_total_links_e.skin, y = 0,
-           label = paste0("Observed = ", obs_total_links_e.skin,
-                          "\nP = ", round(p_val_p10, 3)),
-           hjust = 0, vjust = -1.5, fontface = "bold", size = 4, color = "black")+
-  theme_bw()
-
-plot_links_e.skin #Wang's function
-
-ggsave("nullmodel_p01_E.skin.pdf", plot_links_e.skin, width = 10, height = 8)
-
-
-#### E. prochilos gut - Figure 3D ####
-# Get sample IDs
-e.gut_ids <- metadata %>% filter(type == "E.prochilos gut") %>% pull(sample_id)
-sponge_ids <- metadata %>% filter(type == "sponge") %>% pull(sample_id)
-
-# All combinations of fish and sponge pairs
-fish_sponge_pairs_e.gut <- tidyr::crossing(
-  Fish_gut = e.gut_ids,
-  Sponge = sponge_ids
-)
-
-# Use rowwise() to compute shared taxa for each pair
-fish_sponge_pairs_e.gut <- fish_sponge_pairs_e.gut %>%
-  rowwise() %>%
-  mutate(SharedTaxa = shared_taxa_matrix[Fish_gut, Sponge]) %>%
-  ungroup()
-
-# Generate all unpaired combinations
-fish_sponge_pairs_e.gut <- fish_sponge_pairs_e.gut %>%
-  mutate(Link = ifelse(SharedTaxa >= 5, 1, 0))
-
-#Build binary interaction matrix (Sponge as rows, Fish as columns)
-interaction_matrix_e.gut <- fish_sponge_pairs_e.gut %>%
-  group_by(Sponge, Fish_gut) %>%
-  summarise(Link = max(Link), .groups = "drop") %>%
-  pivot_wider(names_from = Fish_gut, values_from = Link, values_fill = list(Link = 0)) %>%
-  column_to_rownames(var = "Sponge") %>%
-  as.matrix()
-
-#Compute observed metrics
-obs_total_links_e.gut <- sum(interaction_matrix_e.gut)
-#Wang's function
-
-null_list_p10_e.gut <- make.null(interaction_matrix_e.gut, n = 1000, prob = 0.1)
-null_list_p20_e.gut <- make.null(interaction_matrix_e.gut, n = 1000, prob = 0.2)
-null_list_p30_e.gut <- make.null(interaction_matrix_e.gut, n = 1000, prob = 0.3)
-null_list_p50_e.gut <- make.null(interaction_matrix_e.gut, n = 1000, prob = 0.5)
-
-null_total_p10_e.gut <- sapply(null_list_p10_e.gut, sum)
-p_val_p10 <- mean(null_total_p10_e.gut >= obs_total_links_e.gut)
-
-null_total_p20_e.gut <- sapply(null_list_p20_e.skin, sum)
-p_val_p20 <- mean(null_total_p20_e.gut >= obs_total_links_e.gut)
-
-null_total_p30_e.gut<- sapply(null_list_p30_e.skin, sum)
-p_val_p30 <- mean(null_total_p30_e.gut >= obs_total_links_e.gut)
-
-null_total_p50_e.gut<- sapply(null_list_p50_e.skin, sum)
-p_val_p50 <- mean(null_total_p50_e.gut >= obs_total_links_e.gut)
-
-mean(null_total_links_e.gut)
-
-#Plot with Wang's function
-plot_links_e.gut <- ggplot(data.frame(Null = null_total_p10_e.gut), aes(x = Null)) +
-  geom_density(fill = "darkslategrey", alpha = 0.5) +
-  geom_vline(xintercept = obs_total_links_e.gut, linetype = "dashed", color = "red") +
-  labs(title = "E. prochilos gut and sponge", x = "Number of Links (p = 0.1)", y = "Density")+
-  annotate("text", x = obs_total_links_e.gut, y = 0,
-           label = paste0("Observed = ", obs_total_links_e.gut,
-                          "\nP = ", round(p_val_p10, 3)),
-           hjust = 0, vjust = -1.5, fontface = "bold", size = 4, color = "black")+
-  theme_bw()
-
-plot_links_e.gut #Wang's function
-
+threshold_summary(fish_sponge_pairs_skin)
+threshold_summary(fish_sponge_pairs_gut)
 
 #Joining plots - Risor only
-combined_genus<- plot_links_skin / plot_links_gut
+combined<- plot_links_skin05 / plot_links_gut05
 
-ggsave("nullmodel_Risor_all_genus.pdf", combined_genus, width = 10, height = 8)
+ggsave("nullmodel_Risor_ASV.pdf", combined, width = 8, height = 3)
 
-risor_alternative_p_skin<- (plot_links_skin01 + plot_links_skin02) / (plot_links_skin03 + plot_links_skin05)
+#Run for different probabilities
 
-ggsave("nullmodel_Risor_alternative_p_skin.pdf", risor_alternative_p_skin, width = 10, height = 8)
+run_null_probs <- function(interaction_matrix,
+                           tissue_name,
+                           probs = c(0.1, 0.2, 0.3, 0.5),
+                           n = 1000,
+                           threshold = 5) {
+  
+  obs_links <- sum(interaction_matrix)
+  
+  results <- lapply(probs, function(p) {
+    
+    null_list <- make.null(interaction_matrix, n = n, prob = p)
+    null_total <- sapply(null_list, sum)
+    
+    p_val <- (sum(null_total >= obs_links) + 1) /
+      (length(null_total) + 1)
+    
+    data.frame(
+      tissue = tissue_name,
+      link_threshold = paste0(">=", threshold, " ASVs"),
+      null_probability = p,
+      observed_links = obs_links,
+      mean_null_links = mean(null_total),
+      sd_null_links = sd(null_total),
+      min_null_links = min(null_total),
+      max_null_links = max(null_total),
+      empirical_p = p_val
+    )
+  })
+  
+  bind_rows(results)
+}
 
-risor_alternative_p_gut<- (plot_links_gut01 + plot_links_gut02) / (plot_links_gut03 + plot_links_gut05)
+skin_null_results <- run_null_probs(
+  interaction_matrix_skin,
+  tissue_name = "R. ruber skin",
+  probs = c(0.1, 0.2, 0.3, 0.5),
+  n = 1000,
+  threshold = 5
+)
 
-ggsave("nullmodel_Risor_alternative_p_gut.pdf", risor_alternative_p_gut, width = 10, height = 8)
+gut_null_results <- run_null_probs(
+  interaction_matrix_gut,
+  tissue_name = "R. ruber gut",
+  probs = c(0.1, 0.2, 0.3, 0.5),
+  n = 1000,
+  threshold = 5
+)
 
-#Joining plots - Elacatinus only
+null_sensitivity_results <- bind_rows(
+  skin_null_results,
+  gut_null_results
+)
 
-combined_alternative_p<- plot_links_e.skin / plot_links_e.gut
-ggsave("nullmodel_prochilos_p01.pdf", combined_alternative_p, width = 10, height = 8)
+null_sensitivity_results
 
-#Joining plots - ALL
-combined_genus_all<- (plot_links_skin + plot_links_e.skin) / (plot_links_gut + plot_links_e.gut)
-
-ggsave("nullmodel_all_fish_genus.pdf", combined_genus_all, width = 10, height = 8)
-
-
+write.csv(null_sensitivity_results, "nullmodel_sensitivity.csv")

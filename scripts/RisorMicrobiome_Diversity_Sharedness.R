@@ -1,3 +1,9 @@
+####################################################
+######### Risor microbiome project #################
+####### Diveristy analysis and sharednesss #########
+####################################################
+#Updated by: Ingrid Bunholi
+#Date: 07/15/26
 
 #Required packages
 library(tidyverse)
@@ -17,149 +23,55 @@ library(tibble)
 library(UpSetR)
 library(picante)
 library(MASS)
+library(eulerr)
 
-######################################################################
-################# Risor microbiome project ###########################
-########### DATA Analyses - Diversity Metrics (Figure 1) #############
-#####################################################################
+#### Environment set up and data loading ####
+setwd("~/Desktop/Risor_microbiome_paper/Risor_Sponge_Microbiome/metadata") #your working directory
 
-#### Environment set up and data wrangling ####
-setwd("User/workingdirectory") #your working directory
+#Loading processed phyloseq objects
 
-#ASV table - filtered
-asv.all<- read.csv("asv.all.filtered.csv")
+#All samples and all ASVs
+physeq.asv.all<- readRDS("processed_objects/physeq.asv.all.rds")
+physeq.asv.all
 
-asv.all<- asv.all%>%
-  column_to_rownames("ASV")
-asv_m.all<- as.matrix(asv.all)
+# All samples and bacterial ASVs
+physeq.asv.bacteria<- readRDS("processed_objects/physeq.asv.bacteria.rds")
+physeq.asv.bacteria
+table(sample_data(physeq.asv.bacteria)$type)
 
-#Taxon table - filtered
-tax.all<- read.csv("taxon.all.filtered.csv")
+# Risor + sponge, bacterial ASVs
+physeq.asv.bacteria.rs <- readRDS(
+  "processed_objects/physeq.asv.bacteria.rs.rds")
 
-tax.all<- tax.all%>%
-  column_to_rownames("ASV")
-tax_m.all<- as.matrix(tax.all)
+#### Figure 1 C and D - Diversity metrics ####
 
-#Metadata table - filtered
-meta.all<- read.csv("metadata_filtered_all_2000.csv")
+physeq_fig1 <- physeq.asv.bacteria
 
-meta.all<- meta.all%>%
-  column_to_rownames("sample_id")
-meta.all<-sample_data(meta.all)
+physeq_fig1_qc <- prune_samples(
+  sample_sums(physeq_fig1) >= 1000,
+  physeq_fig1)
 
-#Generating phyloseq object with ASV and Taxonomy 
-ASV.all<- otu_table(asv_m.all, taxa_are_rows = TRUE)
-TAX.all<- tax_table(tax_m.all)
+physeq_fig1_qc <- prune_taxa(
+  taxa_sums(physeq_fig1_qc) > 0,
+  physeq_fig1_qc)
 
-physeq.all<- phyloseq(ASV.all, TAX.all)
-
-#Importing tree from qiime to add to phyloseq object
-qiime_tree <- read.tree("tree.nwk")
-
-head(qiime_tree$tip.label) #check tip labels
-
-qiime_tree_filtered <- prune_taxa(taxa_names(physeq.all), phy_tree(phyloseq(qiime_tree))) #Filter the tree to only keep taxa present in your phyloseq object
-
-#ASV LEVEL - Phyloseq object
-physeq.all<- merge_phyloseq(physeq.all, meta.all, qiime_tree_filtered) 
-physeq.all #all the data #14499 ASVs and 165 samples (all)
-
-tree_clean <- ape::keep.tip(phy_tree(physeq1.all), taxa_names(physeq1.all)) #Get tree and prune it to match physeq
-
-physeq.all <- subset_taxa(physeq.all, Genus != "Chloroplast") #removing unwanted taxa
-physeq.all <- subset_taxa(physeq.all, Genus != "Mitochondria") 
-physeq.all <- subset_taxa(physeq.all, Phylum != "Cyanobacteria") 
-
-tree_clean <- ape::keep.tip(phy_tree(physeq.all), taxa_names(physeq.all)) #obtaining cleaned tree
-
-physeq1.all<- merge_phyloseq(physeq.all, tree_clean) #generating final phyloseq object
-
-#GENUS LEVEL - Phyloseq object
-physeq1.all.g <- subset_taxa(physeq1.all, Genus != "NA") #removing unwanted taxa
-physeq1.all.g <- subset_taxa(physeq1.all.g, Genus != "uncultured") 
-physeq1.all.g <- subset_taxa(physeq1.all.g, Genus != "Chloroplast") 
-physeq1.all.g <- subset_taxa(physeq1.all.g, Genus != "Mitochondria") 
-physeq1.all.g <- subset_taxa(physeq1.all.g, Phylum != "Cyanobacteria") 
-
-physeq1.all.g=tax_glom(physeq1.all.g, taxrank="Genus") #914 genus
-
-gen_df <- as.data.frame(otu_table(physeq1.all.g))
-
-#Filtering out genera with less than 50 reads 
-taxa_to_keep_all <- gen_df %>%
-  rownames_to_column(var = "Taxa") %>%  # Keep track of taxa names
-  pivot_longer(-Taxa, names_to = "Sample", values_to = "Abundance") %>% 
-  filter(Abundance > 0) %>%  # Consider only present taxa
-  group_by(Taxa) %>% 
-  summarise(MaxAbundance = max(Abundance)) %>%  # Find max abundance per taxon
-  filter(MaxAbundance > 50) %>%  # Keep only those where max is > 50
-  pull(Taxa)  # Extract taxa names as a vector
-
-physeq1.all.g.f <- prune_taxa(taxa_to_keep_all, physeq1.all.g) #594 genera
-#saveRDS(ps, file = "phyloseq_genus_50ab_all.rds")
-gen_df_f <- as.data.frame(otu_table(physeq1.all.g.f))
-#write.csv(gen_df_f, "genus.filtered.50ab.original.csv")
-
-
-#Obtain most abundant phylum for each sample type
-physeq_rskin <- subset_samples(physeq1.all, type == "Risor skin")
-#physeq_rgut <- subset_samples(physeq1.all, type == "Risor gut")
-#physeq_sponge <- subset_samples(physeq1.all, type == "sponge")
-#physeq_eskin <- subset_samples(physeq1.all, type == "E.prochilos skin")
-#physeq_egut <- subset_samples(physeq1.all, type == "E.prochilos gut")
-#physeq_seawater <- subset_samples(physeq1.all, type == "seawater")
-
-#Extract the taxonomic table and the sample counts - for each of sample types
-tax_table_rskin <- tax_table(physeq_rskin)
-otu_table_rskin <- otu_table(physeq_rskin)
-
-tax_df_rskin <- as.data.frame(tax_table_rskin)
-
-#Summarize ASV counts by phylum
-phyla_abundance_rskin <- otu_table_rskin %>%
-  as.data.frame() %>%
-  rownames_to_column("ASV") %>%
-  gather(key = "Sample", value = "Abundance", -ASV) %>%
-  left_join(tax_df %>% rownames_to_column("ASV"), by = "ASV") %>%
-  filter(!is.na(Phylum)) %>% 
-  group_by(Sample, Phylum) %>%
-  summarise(Abundance = sum(Abundance)) %>%
-  ungroup() %>%
-  arrange(desc(Abundance))
-
-#Calculate relative abundance
-phyla_abundance_rskin <- phyla_abundance_rskin %>%
-  group_by(Sample) %>%
-  mutate(RelativeAbundance = Abundance / sum(Abundance)) %>%
-  ungroup()
-
-#Get the top 10 phyla by relative abundance 
-top_10_phyla <- phyla_abundance %>%
-  group_by(Phylum) %>%
-  summarise(TotalRelativeAbundance = sum(RelativeAbundance)) %>%
-  arrange(desc(TotalRelativeAbundance)) %>%
-  head(10)
-#write.csv(top_10_phyla2, "top_10_phyla.csv")
-
-
-#### Alpha diversity - Figure 1C ####
-
-##Alpha diversity - ASV level##
+physeq_fig1_qc
+table(sample_data(physeq_fig1_qc)$type) 
 
 #Calculate alpha diversity metrics for Shannon and Observed
-alpha_metrics <- estimate_richness(physeq1.all, measures = c("Shannon", "Observed"))
+alpha_metrics <- estimate_richness(physeq_fig1_qc, measures = c("Shannon", "Observed"))
 
 #Combine alpha metrics with sample metadata
-alpha_data <- cbind(alpha_metrics, as(sample_data(physeq1.all), "data.frame"))
+alpha_data <- cbind(alpha_metrics, as(sample_data(physeq_fig1_qc), "data.frame"))
 
 alpha_data2<- alpha_data %>%
   tibble::rownames_to_column(var = "SampleID")
 
 #Phylogenetic diversity - ASV level
-otu <- as(otu_table(physeq1.all), "matrix") #isolating asv table
-if(taxa_are_rows(physeq1.all)) { otu <- t(otu) }
+otu <- as(otu_table(physeq_fig1_qc), "matrix") #isolating asv table
+if(taxa_are_rows(physeq_fig1_qc)) { otu <- t(otu) }
 
-tree <- phy_tree(physeq1.all) #isolating tree
+tree <- phy_tree(physeq_fig1_qc) #isolating tree
 
 pd_result <- pd(otu, tree, include.root = TRUE)
 
@@ -168,206 +80,220 @@ pd_result<- pd_result %>%
 
 alpha_merged<- left_join(alpha_data2, pd_result, by = "SampleID") #merging PD with the other alpha diversity metrics
 
-##Testing the effect of SAMPLE TYPE on ALPHA DIVERSITY using Linear Models##
-#The same functions were used to plot alpha diversity with raw ASVs - supp material
+#Testing the effect of SAMPLE TYPE on ALPHA DIVERSITY using Linear Models
 
 #Shannon
 hist(alpha_merged$Shannon) #checking data distribution
 
-lm_shannon<- lm(Shannon ~ type, data = alpha_merged) #trying linear model first
+lm_shannon<- lm(Shannon ~ type, data = alpha_merged) 
 hist(resid(lm_shannon))
 qqnorm(resid(lm_shannon)); qqline(resid(lm_shannon))
 
-glmShannon <- glm(Shannon ~ sponge_spp, family = Gamma(link = "log"), data = alpha_sponge) #trying glm with gamma distribution
-
-AIC(lm_shannon, glmShannon) #smaller AIC for lm, so sticking with it
 summary(lm_shannon)
 
 #Observed
-hist(alpha_sponge$Observed) #checking data distribution
+hist(alpha_merged$Observed) #checking data distribution
 
 glm_nb <- glm.nb(Observed ~ type, data = alpha_merged) #glm with negative binomial distribution
 summary(glm_nb)
 
 #PD
-hist(alpha_sponge$PD)
+hist(alpha_merged$PD)
 
-glm_pd <- glm(PD ~ sponge_spp, data = alpha_sponge, family = Gamma(link = "log")) #glm with gamma distribution
+glm_pd <- glm(PD ~ type, data = alpha_merged, family = Gamma(link = "log")) #glm with gamma distribution
 summary(glm_pd)
 
-
-##Plotting alpha diversity - sample type - Figure 1C##
+##Plotting alpha diversity for ASV - sample type - Figure 1C##
 alpha_long <- pivot_longer(alpha_merged, 
                            cols = c("Observed", "Shannon", "PD"), 
                            names_to = "metric", 
                            values_to = "value")
 
+alpha_long <- alpha_long %>%
+  mutate(type = factor(type,
+      levels = c(
+        "Risor gut",
+        "Risor skin",
+        "E.prochilos gut",
+        "E.prochilos skin",
+        "sponge",
+        "seawater")))
+
+
 alpha_plot <- ggplot(alpha_long, aes(x = type, y = value, fill = type, color = type)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) + 
   geom_jitter(width = 0.2, size = 1.5, alpha = 0.8) + 
-  facet_wrap(~ metric, scales = "free_y") +           
+  facet_wrap(~ metric, scales = "free_y", ncol = 1) +  
   theme_bw() +
   theme(legend.position = "none", 
         axis.title.x = element_blank()) +
   labs(x = "Sample Type", y = "Alpha Diversity") +
   scale_fill_manual(values = c("Risor skin" = "#DDCC77", 
-                               "sponge" = "#661100", 
+                               "sponge" = "#1D2D55", 
                                "Risor gut" = "#44AA99",
-                               "E.prochilos skin" = "#B8887A", 
+                               "E.prochilos skin" = "#B8887A",
                                "E.prochilos gut" = "darkslategrey", 
-                               "seawater" = "darkblue")) +
+                               "seawater" = "royalblue"
+                               )) +
   scale_color_manual(values = c("Risor skin" = "#DDCC77", 
-                                "sponge" = "#661100", 
-                                "Risor gut" = "#44AA99", 
-                                "E.prochilos skin" = "#B8887A", 
+                                "sponge" = "#1D2D55", 
+                                "Risor gut" = "#44AA99",
+                                "E.prochilos skin" = "#B8887A",
                                 "E.prochilos gut" = "darkslategrey", 
-                                "seawater" = "darkblue"))
+                                "seawater" = "royalblue"))
 
-#ggsave("alpha_boxplot_genus_all_metrics_ASV_new.pdf", alpha_plot , width = 10, height = 4, useDingbats = FALSE)
+alpha_plot +
+  ggh4x::facetted_pos_scales(
+    y = list(
+      metric == "Observed" ~ scale_y_continuous(limits = c(0, 1000)),
+      metric == "PD"       ~ scale_y_continuous(limits = c(0, 45)),
+      metric == "Shannon"  ~ scale_y_continuous()
+    )
+  )
+ggsave("alpha_boxplot_ASV_Bac_Risor_Sponge_Prochilos_Seawater.pdf", alpha_plot , width = 3.5, height = 9, useDingbats = FALSE)
 
-##Testing the effect of SPONGE SPECIES on ALPHA DIVERSITY - Supp figure##
+# Beta diversity - Figure 1D 
 
-alpha_sponge<- alpha_merged%>%
-  filter(type == "sponge")
+pcoa.asv<- ordinate(physeq_fig1_qc, "PCoA", "unifrac", weighted=FALSE) #Unifrac distance
+pcoa.plot.asv<- plot_ordination(physeq_fig1_qc, pcoa.asv, color="type")
+pcoa.plot.asv<- pcoa.plot.asv + geom_point(size=2)+
+  theme_bw()+
+  scale_colour_manual(values = c("Risor skin" = "#DDCC77", 
+                                 "sponge" = "#1D2D55", 
+                                 "Risor gut" = "#44AA99",
+                                 "E.prochilos skin" = "#B8887A",
+                                 "E.prochilos gut" = "darkslategrey", 
+                                 "seawater" = "royalblue"))+
+  labs(color="Sample Type")+
+  stat_ellipse(
+    aes(color = type),
+    type = "norm",
+    level = 0.95,
+    linetype = 2,
+    linewidth = 0.2,
+    show.legend = FALSE
+  )+
+  theme(legend.position = "none")
+pcoa.plot.asv
 
-#Shannon
-hist(alpha_sponge$Shannon)
+ggsave("PCoA_ASV_Bac_Risor_Sponge_Prochilos_Seawater.pdf", pcoa.plot.asv , width = 5.5, height = 5, useDingbats = FALSE)
 
-lm_shannon<- lm(Shannon ~ sponge_spp, data = alpha_sponge)
-hist(resid(lm_shannon))
-qqnorm(resid(lm_shannon)); qqline(resid(lm_shannon))
 
-glmShannon <- glm(Shannon ~ sponge_spp, family = Gamma(link = "log"), data = alpha_sponge)
-AIC(lm_shannon, glmShannon) #smaller AIC for lm, so sticking with it
-summary(lm_shannon)
-
-#Observed
-hist(alpha_sponge$Observed)
-
-glm_nb <- glm.nb(Observed ~ sponge_spp, data = alpha_sponge)
-summary(glm_nb)
-
-#PD
-hist(alpha_sponge$PD)
-glm_pd <- glm(PD ~ sponge_spp, data = alpha_sponge, family = Gamma(link = "log"))
-summary(glm_pd)
-
-##Plotting alpha diversity - sponge species## 
-custom_colors <- c(
-  "I. campana" = "lightsalmon3",
-  "I. felix" = "saddlebrown",
-  "I. ruetzleri" = "peachpuff3",
-  "I. strobilina" = "gray38"
+#Checking whether unifrac differences are statistically different - PERMANOVA
+unifrac_dist <- phyloseq::distance(
+  physeq_fig1_qc,
+  method = "unifrac",
+  weighted = FALSE
 )
 
-alpha_long_sp <- alpha_long %>%
-  filter(!is.na(sponge_spp))%>%
-  mutate(sponge_spp = fct_recode(sponge_spp,
-                                 "I. campana"    = "Ircinia campana",
-                                 "I. felix"      = "Ircinia felix",
-                                 "I. ruetzleri"  = "Ircinia ruetzleri",
-                                 "I. strobilina" = "Ircinia strobilina"
-  ))
+metadata_rs <- data.frame(
+  SampleID = sample_names(physeq_fig1_qc),
+  type = sample_data(physeq_fig1_qc)$type
+)
+
+rownames(metadata_rs) <- metadata_rs$SampleID
+
+set.seed(123)
+
+adonis_res<-adonis2(
+  unifrac_dist ~ type,
+  data = metadata_rs,
+  permutations = 999
+)
+
+print(adonis_res)
 
 
-alpha_plot_sp <- ggplot(alpha_long_sp, aes(x = sponge_spp, y = value, fill = sponge_spp, color = sponge_spp)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.6) +   
-  geom_jitter(width = 0.2, size = 1.5, alpha = 0.8) + 
-  facet_wrap(~ metric, scales = "free_y") +          
-  theme(legend.position = "none", 
-        axis.title.x = element_blank()) +
-  scale_fill_manual(values = custom_colors) +
-  scale_color_manual(values = custom_colors) +
-  labs(x = "Sample Type", y = "Alpha Diversity") 
-alpha_plot_sp
+##Beta diversity at the genus level
 
-#ggsave("alpha_boxplot_asv_sponge_species.pdf", alpha_plot_sp , width = 10, height = 4, useDingbats = FALSE)
+physeq_fig1qc_genus <- physeq_fig1_qc %>%
+  tax_glom(taxrank = "Genus", NArm = FALSE)
 
+physeq_fig1qc_genus <- subset_taxa(
+  physeq_fig1qc_genus,
+  !is.na(Genus) &
+    Genus != "" &
+    Genus != "uncultured" &
+    Genus != "Unassigned"
+)
 
-#### Beta diversity - Figure 1D ####
-
-##ASV level and sample type - supp material Figure S7
-
-physeq1.all@sam_data$type <- factor(physeq1.all@sam_data$type, 
-                                    levels = c("Risor gut", "Risor skin", "sponge", 
-                                               "E.prochilos gut", "E.prochilos skin", "seawater"))
-
-pcoa.asv.p.w<- ordinate(physeq1.all, "PCoA", "unifrac", weighted=FALSE) #Unifrac distance
-pcoa.plot.asv.p.w<- plot_ordination(physeq1.all, pcoa.asv.p.w, color="type")
-pcoa.plot.asv.p.w<- pcoa.plot.asv.p.w + geom_point(size=2)+
+pcoa.gen<- ordinate(physeq_fig1qc_genus, "PCoA", "unifrac", weighted=FALSE) #Unifrac distance
+pcoa.plot.gen<- plot_ordination(physeq_fig1qc_genus, pcoa.gen, color="type")
+pcoa.plot.gen<- pcoa.plot.gen + geom_point(size=2)+
   theme_bw()+
   scale_colour_manual(values = c("Risor skin" = "#DDCC77", 
-                                 "sponge" = "#661100", 
+                                 "sponge" = "#1D2D55", 
                                  "Risor gut" = "#44AA99",
-                                 "E.prochilos skin" = "#B8887A", 
+                                 "E.prochilos skin" = "#B8887A",
                                  "E.prochilos gut" = "darkslategrey", 
-                                 "seawater" = "darkblue"))+
+                                 "seawater" = "royalblue"))+
   labs(color="Sample Type")+
-  stat_ellipse(aes(group = type), level = 0.95, linetype = 2)
-pcoa.plot.asv.p.w
+  stat_ellipse(
+    aes(color = type),
+    type = "norm",
+    level = 0.68,
+    linetype = 2,
+    linewidth = 0.5,
+    show.legend = FALSE
+  )+
+  theme(legend.position = "top")
+pcoa.plot.gen
 
-#ggsave("pcoa_sampletype_all_ASV_new.pdf", pcoa.plot.asv.p.w , width = 8, height = 6, useDingbats = FALSE)
+ggsave("PCoA_Genus_Bac_Risor_Sponge_Prochilos_Seawater.pdf", pcoa.plot.gen , width = 5.5, height = 5, useDingbats = FALSE)
 
-alpha_pca<- alpha_plot / pcoa.plot.asv.p.w
 
-##Genus level and sample type - Figure 1D
-physeq1.all.g@sam_data$type <- factor(physeq1.all.g@sam_data$type, 
-                                      levels = c("Risor gut", "Risor skin", "sponge", 
-                                                 "E.prochilos gut", "E.prochilos skin", "seawater"))
+#Checking whether unifrac differences are statistically different - PERMANOVA
+unifrac_dist <- phyloseq::distance(
+  physeq_fig1_qc,
+  method = "unifrac",
+  weighted = FALSE
+)
 
-pcoa.gen<- ordinate(physeq1.all.g, "PCoA", "unifrac", weighted=FALSE)
-pcoa.gen<- plot_ordination(physeq1.all.g, pcoa.gen, color="type")
-pcoa.gen.plot<- pcoa.gen + geom_point(size=2)+
-  theme_bw()+
-  scale_colour_manual(values = c("Risor skin" = "#DDCC77", 
-                                 "sponge" = "#661100", 
-                                 "Risor gut" = "#44AA99",
-                                 "E.prochilos skin" = "#B8887A", 
-                                 "E.prochilos gut" = "darkslategrey", 
-                                 "seawater" = "darkblue"))+
-  labs(color="Sample Type")+
-  stat_ellipse(aes(group = type), level = 0.95, linetype = 2)
-pcoa.gen.plot
-ggsave("pcoa_sampletype_all_Genus_new.pdf", pcoa.gen.plot , width = 8, height = 6, useDingbats = FALSE)
+metadata_rs <- data.frame(
+  SampleID = sample_names(physeq_fig1_qc),
+  type = sample_data(physeq_fig1_qc)$type
+)
 
-#Checking whether unifrac differences are statistically different
-unifrac_dist <- phyloseq::distance(physeq1.all.g, method = "unifrac", weighted = FALSE)
+rownames(metadata_rs) <- metadata_rs$SampleID
 
-sample_meta <- as(sample_data(physeq1.all.g), "data.frame")
+set.seed(123)
 
-#PERMANOVA using adonis
-set.seed(123)  # For reproducibility of the permutation test
-adonis_res <- adonis2(unifrac_dist ~ type, data = sample_meta, permutations = 999)
+adonis_res<-adonis2(
+  unifrac_dist ~ type,
+  data = metadata_rs,
+  permutations = 999
+)
 
 print(adonis_res)
 
 #Checking whether differences are due to within group dispersion
-disp <- betadisper(unifrac_dist, sample_meta$type)
-anova(disp)
-permutest(disp, pairwise = TRUE, permutations = 999) #pairwise
-plot(disp)
-boxplot(disp) #assumption of homogeneous dispersion is violated by all variables except seawater and sponge
+dispersion <- betadisper(
+  unifrac_dist,
+  group = metadata_rs$type
+)
+
+permutest(dispersion, permutations = 999)
+anova(dispersion)
 
 
-##Genus level and Sponge species - supp material Figure S5
-
+##Beta diversity sponge - supplemental material (Figure S2)
 custom_colors <- c(
   "Ircinia campana" = "lightsalmon3",
-  "Ircinia felix" = "saddlebrown",
-  "Ircinia ruetzleri" = "peachpuff3",
-  "Ircinia strobilina" = "gray38"
+  "Ircinia felix" = "brown",
+  "Ircinia ruetzleri" = "green4",
+  "Ircinia strobilina" = "gray20"
 )
 
 # Remove samples where sponge_spp is NA
-physeq1.g.filtered <- subset_samples(physeq1.all.g, !is.na(sponge_spp))
+physeq_fig1_qc.sponge <- subset_samples(physeq_fig1_qc, !is.na(sponge_spp))
 
-physeq1.g.filtered@sam_data$sponge_spp <- factor(physeq1.g.filtered@sam_data$sponge_spp, 
-                                                 levels = c("Ircinia campana", "Ircinia felix", "Ircinia ruetzleri", 
-                                                            "Ircinia strobilina"))
+physeq_fig1_qc.sponge@sam_data$sponge_spp <- factor(physeq_fig1_qc.sponge@sam_data$sponge_spp, 
+                                                    levels = c("Ircinia campana", "Ircinia felix", "Ircinia ruetzleri", 
+                                                               "Ircinia strobilina"))
 
-pcoa.gen.sponge<- ordinate(physeq1.g.filtered, "PCoA", "unifrac", weighted=FALSE)
+pcoa.gen.sponge<- ordinate(physeq_fig1_qc.sponge, "PCoA", "unifrac", weighted=FALSE)
 
-pcoa.gen.sponge<- plot_ordination(physeq1.g.filtered, pcoa.gen.sponge, color="sponge_spp")
+pcoa.gen.sponge<- plot_ordination(physeq_fig1_qc.sponge, pcoa.gen.sponge, color="sponge_spp")
 
 pcoa.gen.plot.sponge<- pcoa.gen.sponge + geom_point(size=2)+
   theme_bw()+
@@ -376,13 +302,13 @@ pcoa.gen.plot.sponge<- pcoa.gen.sponge + geom_point(size=2)+
   stat_ellipse(aes(group = sponge_spp), level = 0.95, linetype = 2)
 pcoa.gen.plot.sponge
 
-#ggsave("pcoa_spongespp_Genus_new.pdf", pcoa.gen.plot.sponge, width = 8, height = 6, useDingbats = FALSE)
+ggsave("pcoa_spongespp_ASV_new.pdf", pcoa.gen.plot.sponge, width = 8, height = 6, useDingbats = FALSE)
 
 
 #Checking whether unifrac differences are statistically different
-unifrac_dist <- phyloseq::distance(physeq1.g.filtered, method = "unifrac", weighted = FALSE)
+unifrac_dist <- phyloseq::distance(physeq_fig1_qc.sponge, method = "unifrac", weighted = FALSE)
 
-sample_meta <- as(sample_data(physeq1.g.filtered), "data.frame")
+sample_meta <- as(sample_data(physeq_fig1_qc.sponge), "data.frame")
 
 #PERMANOVA using adonis
 set.seed(123)  # For reproducibility of the permutation test
@@ -390,349 +316,931 @@ adonis_res_sponge <- adonis2(unifrac_dist ~ sponge_spp, data = sample_meta, perm
 
 print(adonis_res_sponge)
 
+#### Figure 2 A and B - Shared quantity ####
+
+physeq_fig2_asv <- physeq_fig1_qc
+
+#Remove Cyanobacteria
+
+tax_df <- as.data.frame(tax_table(physeq_fig2_asv))
+
+is_cyanobacteria <- !is.na(tax_df$Phylum) &
+  grepl("Cyanobacter", tax_df$Phylum, ignore.case = TRUE)
+
+physeq_fig2_asv <- prune_taxa(
+  taxa_names(physeq_fig2_asv)[!is_cyanobacteria],
+  physeq_fig2_asv)
+
+physeq_fig2_asv <- prune_taxa(
+  taxa_sums(physeq_fig2_asv) > 0,
+  physeq_fig2_asv)
+
+physeq_fig2_asv #10692 ASVs and 121 samples (only 395 ASVs removed)
+
+#checking if any samples fall below 1000 reads after filtering - no they did not
+data.frame(
+  type = sample_data(physeq_fig2_asv)$type,
+  reads = sample_sums(physeq_fig2_asv)
+) %>%
+  group_by(type) %>%
+  summarise(
+    n = n(),
+    min_reads = min(reads),
+    median_reads = median(reads),
+    n_below_1000 = sum(reads < 1000),
+    .groups = "drop")
+
+#Figure 2A - ASV level
+#create a sample-by-sample binary matrix for venndiagram
+asv_counts <- as(otu_table(physeq_fig2_asv), "matrix")
+
+if (taxa_are_rows(physeq_fig2_asv)) {
+  asv_counts <- t(asv_counts)}
+
+metadata_fig2 <- data.frame(sample_data(physeq_fig2_asv))
+
+metadata_fig2 <- metadata_fig2[
+  rownames(asv_counts),
+  ,
+  drop = FALSE]
+
+asv_binary <- asv_counts > 0 #rows are samples and columns are ASVs
+
+#Separate by sample type 
+groups <- c("Risor gut", "Risor skin", "sponge")
+
+asv_sets <- setNames(
+  lapply(groups, function(group_name) {
+    
+    group_samples <- metadata_fig2$type == group_name
+    
+    colnames(asv_binary)[
+      colSums(asv_binary[group_samples, , drop = FALSE]) > 0
+    ]
+  }),
+  groups
+)
+
+sapply(asv_sets, length)
+
+#plot the Euler diagram
+euler_asv <- eulerr::euler(asv_sets)
+
+pdf(file = "Euler_2A.pdf", width = 4, height = 3)
+plot(
+  euler_asv,
+  quantities = TRUE,
+  labels = TRUE,
+  fills = list(
+    fill = c(
+      "Risor gut" = "#44AA99",
+      "Risor skin" = "#DDCC77",
+      "sponge" = "#1D2D55"), alpha = 0.8))
+dev.off()
+
+#Euler - genus level
+physeq_fig2_genus=tax_glom(physeq_fig2_asv, taxrank="Genus") #931 genera
+physeq_fig2_genus<- subset_taxa(physeq_fig2_genus, Genus != "uncultured") #825 genera
+
+genus_counts <- as(otu_table(physeq_fig2_genus), "matrix")
+if (taxa_are_rows(physeq_fig2_genus)) { genus_counts <- t(genus_counts)}
+
+groups <- c("Risor gut", "Risor skin", "sponge")
+
+genus_sets <- psmelt(physeq_fig2_genus) %>%
+  filter(
+    type %in% groups,
+    Abundance > 0
+  ) %>%
+  distinct(type, Genus) %>%
+  group_by(type) %>%
+  summarise(
+    genera = list(Genus),
+    .groups = "drop"
+  ) %>%
+  deframe()
+
+#Plot Euler for genus level
+euler_genus <- eulerr::euler(genus_sets)
+
+#cairo_pdf(file = "euler_2B.pdf", width = 4, height = 3)
+#plot(
+#  euler_genus,
+#  quantities = TRUE,
+#  labels = TRUE,
+#  fills = list(
+#    fill = c(
+#      "Risor gut" = "#44AA99",
+#      "Risor skin" = "#DDCC77",
+#      "sponge" = "#1D2D55"), alpha = 0.8))
+#dev.off()
+
+#### Figure 2 B - Shared proportion ####
+
+# ASV level
+
+#identify all ASVs detected in at least one sponge sample
+sponge_samples <- rownames(metadata_fig2)[
+  metadata_fig2$type == "sponge"]
+
+sponge_asvs <- colnames(asv_counts)[
+  colSums(
+    asv_counts[sponge_samples, , drop = FALSE] > 0) > 0]
+
+length(sponge_asvs)
+
+#calculate the proportion separately for every fish sample
+fish_samples <- rownames(metadata_fig2)[
+  metadata_fig2$type %in% c("Risor gut", "Risor skin")]
+
+asv_shared_reads <- data.frame(
+  sample_id = fish_samples,
+  type = metadata_fig2[fish_samples, "type"],
+  total_reads = rowSums(
+    asv_counts[fish_samples, , drop = FALSE]),
+  shared_reads = rowSums(
+    asv_counts[
+      fish_samples,
+      sponge_asvs,
+      drop = FALSE])) %>%
+  mutate(shared_percent = 100 * shared_reads / total_reads,
+    type = factor(type, levels = c("Risor gut", "Risor skin")))
+
+asv_shared_reads %>%
+  group_by(type) %>%
+  summarise(
+    n = n(),
+    mean_percent = mean(shared_percent),
+    sd_percent = sd(shared_percent),
+    median_percent = median(shared_percent),
+    IQR_percent = IQR(shared_percent),
+    min_percent = min(shared_percent),
+    max_percent = max(shared_percent),
+    .groups = "drop"
+  )
+
+#visualizing in the boxplot
+plot_shared_asv <- ggplot(
+  asv_shared_reads,
+  aes(x = type,
+    y = shared_percent,
+    fill = type,
+    color = type)) +
+  geom_boxplot(
+    outlier.shape = NA,
+    alpha = 0.6, width = 0.6) +
+  geom_jitter(
+    width = 0.2,
+    size = 2,
+    alpha = 0.8) +
+  scale_fill_manual(
+    values = c("Risor gut" = "#44AA99","Risor skin" = "#DDCC77")) +
+  scale_color_manual(values = c("Risor gut" = "#44AA99", "Risor skin" = "#DDCC77")) +
+  scale_y_continuous(
+    labels = function(x) paste0(x, "%"),
+    limits = c(0, 100),
+    expand = expansion(mult = c(0, 0.03))) +
+  labs(
+    x = NULL,
+    y = paste(
+      "Reads belonging to ASVs",
+      "also detected in sponges (%)")) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+plot_shared_asv
+
+ggsave("Shared_ASV_boxplot.pdf", plot_shared_asv, width = 4, height = 3, useDingbats = FALSE)
+
+#Genus level
+sponge_samples <- rownames(metadata_fig2)[
+  metadata_fig2$type == "sponge"]
+
+sponge_genus <- colnames(genus_counts)[
+  colSums(
+    genus_counts[sponge_samples, , drop = FALSE] > 0) > 0]
+
+length(sponge_genus)
+
+#calculate the proportion separately for every fish sample
+fish_samples <- rownames(metadata_fig2)[
+  metadata_fig2$type %in% c("Risor gut", "Risor skin")]
+
+genus_shared_reads <- data.frame(
+  sample_id = fish_samples,
+  type = metadata_fig2[fish_samples, "type"],
+  total_reads = rowSums(
+    genus_counts[fish_samples, , drop = FALSE]),
+  shared_reads = rowSums(
+    genus_counts[
+      fish_samples,
+      sponge_genus,
+      drop = FALSE])) %>%
+  mutate(shared_percent = 100 * shared_reads / total_reads,
+         type = factor(type, levels = c("Risor gut", "Risor skin")))
+
+genus_shared_reads %>%
+  group_by(type) %>%
+  summarise(
+    n = n(),
+    mean_percent = mean(shared_percent),
+    sd_percent = sd(shared_percent),
+    median_percent = median(shared_percent),
+    IQR_percent = IQR(shared_percent),
+    min_percent = min(shared_percent),
+    max_percent = max(shared_percent),
+    .groups = "drop"
+  )
+
+#visualizing in the boxplot
+plot_shared_genus <- ggplot(
+  genus_shared_reads,
+  aes(x = type,
+      y = shared_percent,
+      fill = type,
+      color = type)) +
+  geom_boxplot(
+    outlier.shape = NA,
+    alpha = 0.6, width = 0.6) +
+  geom_jitter(
+    width = 0.2,
+    size = 2,
+    alpha = 0.8) +
+  scale_fill_manual(
+    values = c("Risor gut" = "#44AA99","Risor skin" = "#DDCC77")) +
+  scale_color_manual(values = c("Risor gut" = "#44AA99", "Risor skin" = "#DDCC77")) +
+  scale_y_continuous(
+    labels = function(x) paste0(x, "%"),
+    limits = c(0, 100),
+    expand = expansion(mult = c(0, 0.03))) +
+  labs(
+    x = NULL,
+    y = paste(
+      "Genus-assigned reads belonging to genera",
+      "also detected in sponges (%)")) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+plot_shared_genus
+
+#ggsave("Shared_Genus_boxplot.pdf", plot_shared_genus, width = 4, height = 3, useDingbats = FALSE)
+
+#overall summary - Genus level
+
+shared_summary <- bind_rows(
+  asv_shared_reads %>%
+    mutate(resolution = "ASV"),
+  genus_shared_reads %>%
+    mutate(resolution = "Genus")) %>%
+  group_by(resolution, type) %>%
+  summarise(
+    n = n(),
+    mean_percent = mean(shared_percent),
+    sd_percent = sd(shared_percent),
+    median_percent = median(shared_percent),
+    IQR_percent = IQR(shared_percent),
+    min_percent = min(shared_percent),
+    max_percent = max(shared_percent),
+    .groups = "drop")
+
+shared_summary
+
+#### Sensitivity analysis - Sharedness ####
+
+# Threshold combinations
+prevalence_cutoffs <- c(0.05, 0.10, 0.20)
+read_cutoffs <- c(10, 50, 100)
+
+genus_summary <- genus_counts %>%
+  as.data.frame() %>%
+  rownames_to_column("sample_id") %>%
+  pivot_longer(
+    -sample_id,
+    names_to = "Genus",
+    values_to = "reads") %>%
+  left_join(
+    metadata_fig2 %>%
+      as.data.frame() %>%
+      rownames_to_column("sample_id") %>%
+      dplyr::select(sample_id, type),
+    by = "sample_id") %>%
+  mutate(
+    type = recode(
+      type,
+      "Risor gut" = "gut",
+      "Risor skin" = "skin",
+      "sponge" = "sponge")) %>%
+  group_by(type, Genus) %>%
+  summarise(
+    pooled_reads = sum(reads),
+    prevalence = mean(reads > 0),
+    .groups = "drop") %>%
+  pivot_wider(
+    names_from = type,
+    values_from = c(pooled_reads, prevalence),
+    values_fill = 0)
+
+#Function to calculate sensitivity results for one tissue
+make_sensitivity_table <- function(data, tissue, tissue_label) {
+  
+  tissue_reads <- paste0("pooled_reads_", tissue)
+  
+  # No threshold, prevalence-only, and read-only criteria
+  individual_thresholds <- tibble(
+    `Filtering criterion` = c(
+      "No additional threshold",
+      "Sponge prevalence >=5%",
+      "Sponge prevalence >=10%",
+      "Sponge prevalence >=20%",
+      ">10 reads in both groups",
+      ">50 reads in both groups",
+      ">100 reads in both groups"
+    ),
+    
+    `Shared genera` = c(
+      sum(
+        data[[tissue_reads]] > 0 &
+          data$pooled_reads_sponge > 0
+      ),
+      
+      sum(
+        data[[tissue_reads]] > 0 &
+          data$prevalence_sponge >= 0.05
+      ),
+      
+      sum(
+        data[[tissue_reads]] > 0 &
+          data$prevalence_sponge >= 0.10
+      ),
+      
+      sum(
+        data[[tissue_reads]] > 0 &
+          data$prevalence_sponge >= 0.20
+      ),
+      
+      sum(
+        data[[tissue_reads]] > 10 &
+          data$pooled_reads_sponge > 10
+      ),
+      
+      sum(
+        data[[tissue_reads]] > 50 &
+          data$pooled_reads_sponge > 50
+      ),
+      
+      sum(
+        data[[tissue_reads]] > 100 &
+          data$pooled_reads_sponge > 100
+      )
+    )
+  )
+  
+  # All prevalence × read-count combinations
+  combined_thresholds <- crossing(
+    prevalence_cutoff = prevalence_cutoffs,
+    read_cutoff = read_cutoffs
+  ) %>%
+    rowwise() %>%
+    mutate(
+      `Filtering criterion` = paste0(
+        "Sponge prevalence >=",
+        prevalence_cutoff * 100,
+        "% and >",
+        read_cutoff,
+        " reads in both groups"
+      ),
+      
+      `Shared genera` = sum(
+        data$prevalence_sponge >= prevalence_cutoff &
+          data[[tissue_reads]] > read_cutoff &
+          data$pooled_reads_sponge > read_cutoff
+      )
+    ) %>%
+    ungroup() %>%
+    dplyr::select(
+      `Filtering criterion`,
+      `Shared genera`
+    )
+  
+  bind_rows(
+    individual_thresholds,
+    combined_thresholds
+  ) %>%
+    mutate(
+      Tissue = tissue_label,
+      .before = 1
+    )
+}
+
+#then apply for each sample type
+gut_sensitivity <- make_sensitivity_table(
+  data = genus_summary,
+  tissue = "gut",
+  tissue_label = "Risor gut"
+)
+
+skin_sensitivity <- make_sensitivity_table(
+  data = genus_summary,
+  tissue = "skin",
+  tissue_label = "Risor skin"
+)
+
+sensitivity_table <- bind_rows(
+  gut_sensitivity,
+  skin_sensitivity
+)
+
+sensitivity_table
+#write_tsv(sensitivity_table, "sensitivity_table_complete.tsv")
+
+#gut sensitivity
+gut_sensitivity <- genus_summary %>%
+  summarise(
+    `No additional threshold` =
+      sum(pooled_reads_gut > 0 & pooled_reads_sponge > 0),
+    `Sponge prevalence >=5%` =
+      sum(pooled_reads_gut > 0 & prevalence_sponge >= 0.05),
+    `Sponge prevalence >=10%` =
+      sum(pooled_reads_gut > 0 & prevalence_sponge >= 0.10),
+    `Sponge prevalence >=20%` =
+      sum(pooled_reads_gut > 0 & prevalence_sponge >= 0.20),
+    `>10 reads in both groups` =
+      sum(pooled_reads_gut > 10 & pooled_reads_sponge > 10),
+    `>50 reads in both groups` =
+      sum(pooled_reads_gut > 50 & pooled_reads_sponge > 50),
+    `>100 reads in both groups` =
+      sum(pooled_reads_gut > 100 & pooled_reads_sponge > 100),
+    `>=10% prevalence and >50 reads` =
+      sum(
+        prevalence_sponge >= 0.10 &
+          pooled_reads_gut > 50 &
+          pooled_reads_sponge > 50)) %>%
+  pivot_longer(
+    everything(),
+    names_to = "Filtering criterion",
+    values_to = "Shared genera") %>%
+  mutate(Tissue = "Risor gut")
+
+#skin sensitivity
+skin_sensitivity <- genus_summary %>%
+  summarise(
+    `No additional threshold` =
+      sum(pooled_reads_skin > 0 & pooled_reads_sponge > 0),
+    `Sponge prevalence >=5%` =
+      sum(pooled_reads_skin > 0 & prevalence_sponge >= 0.05),
+    `Sponge prevalence >=10%` =
+      sum(pooled_reads_skin > 0 & prevalence_sponge >= 0.10),
+    `Sponge prevalence >=20%` =
+      sum(pooled_reads_skin > 0 & prevalence_sponge >= 0.20),
+    `>10 reads in both groups` =
+      sum(pooled_reads_skin > 10 & pooled_reads_sponge > 10),
+    `>50 reads in both groups` =
+      sum(pooled_reads_skin > 50 & pooled_reads_sponge > 50),
+    `>100 reads in both groups` =
+      sum(pooled_reads_skin > 100 & pooled_reads_sponge > 100),
+    `>=10% prevalence and >50 reads` =
+      sum(
+        prevalence_sponge >= 0.10 &
+          pooled_reads_skin > 50 &
+          pooled_reads_sponge > 50)) %>%
+  pivot_longer(
+    everything(),
+    names_to = "Filtering criterion",
+    values_to = "Shared genera") %>%
+  mutate(Tissue = "Risor skin")
+
+#combine
+sensitivity_table <- bind_rows(
+  gut_sensitivity,
+  skin_sensitivity) %>%
+  dplyr::select(Tissue, `Filtering criterion`, `Shared genera`)
+
+sensitivity_table
+
+write_tsv(sensitivity_table, "sensitivity_analysis.tsv")
+
+#### Figure 3 Overall sharedness ####
+
+physeq.fig3.g<- physeq.asv.bacteria #13780 ASVs
+physeq.fig3.g=tax_glom(physeq.fig3.g, taxrank="Genus")
+
+physeq.fig3.g <- subset_taxa(physeq.fig3.g, Genus != "NA") #removing unwanted taxa
+physeq.fig3.g <- subset_taxa(physeq.fig3.g, Genus != "uncultured") 
+physeq.fig3.g <- subset_taxa(physeq.fig3.g, Phylum != "Cyanobacteria") #914
+
+#check thresholds: 5% of 43 sponges represent 3 sponges
+n_sponges <- sum(sample_data(physeq.fig3.g)$type == "sponge")
+n_sponges
+minimum_sponges<- ceiling(0.05 * n_sponges)
+
+sponge_prevalence <- psmelt(physeq.fig3.g) %>%
+  filter(
+    type == "sponge",
+    Abundance > 0
+  ) %>%
+  distinct(Sample, Genus) %>%
+  count(Genus, name = "n_sponges_present") %>%
+  mutate(
+    prevalence = n_sponges_present / n_sponges
+  )
 
 
-##############################################################################
-######################### Risor microbiome project ###########################
-############## DATA Analyses - Shared Microbiome (Figure 2 and 4) ############
-##############################################################################
+genera_keep <- sponge_prevalence %>%
+  filter(n_sponges_present >= minimum_sponges) %>%
+  pull(Genus)
 
-#### Shared microbiome sample types (UpsetR plot) - Figure 2A ####
-tax_table_gen.all #594 genus - Genus with more than 50 reads overall
-tax_table_gen.all <- tax_table_gen.all%>%
-  dplyr::select(-c("Species", "pident"))
+length(genera_keep)
 
-# Define the categorical columns to exclude from transformation
-categorical_columns <- c("Genus", "Phylum", "Class", "Family", "Order", "ASV")
+#retain genera present in at least 5% of sponges
+genera_keep <- sponge_prevalence %>%
+  filter(prevalence >= 0.05) %>%
+  pull(Genus)
 
-# Convert ASV counts to presence-absence (1 for presence, 0 for absence)
-df_pa <- tax_table_gen.all %>%
-  mutate(across(-all_of(categorical_columns), ~ ifelse(. > 0, 1, 0)))%>%
-  dplyr::select(-c(ASV, Phylum, Class, Order, Family, Genus))
+physeq.fig3.g.5 <- subset_taxa(physeq.fig3.g, Genus %in% genera_keep)
 
-df_numeric <- df_pa %>%
-  dplyr::select(where(is.numeric))
+physeq.fig3.g.5 <- prune_taxa(taxa_sums(physeq.fig3.g.5) > 0, physeq.fig3.g.5) #98 genera
 
-df_filtered <- df_numeric %>%
-  rowwise() %>%
-  mutate(total_presence = sum(c_across(everything()), na.rm = TRUE)) %>%  # Count in how many sets each taxon appears
-  filter(total_presence > 1)%>%  # Remove taxa that appear in only one set
-  dplyr::select(-total_presence)  # Drop helper column
+sort(unique(sample_data(physeq.fig3.g.5)$type))
 
-df_filtered <- as.data.frame(df_filtered)
+fig3_groups <- c(
+  "sponge",
+  "Risor gut",
+  "Risor skin",
+  "E.prochilos gut",
+  "E.prochilos skin",
+  "seawater"
+)
+
+#create genus sets
+genus_sets_fig3 <- psmelt(physeq.fig3.g.5) %>%
+  filter(
+    type %in% fig3_groups,
+    Abundance > 0
+  ) %>%
+  distinct(type, Genus) %>%
+  group_by(type) %>%
+  summarise(
+    genera = list(Genus),
+    .groups = "drop"
+  ) %>%
+  deframe()
+
+genus_sets_fig3 <- genus_sets_fig3[fig3_groups]
+
+names(genus_sets_fig3) <- c(
+  "Sponge",
+  "R. ruber gut",
+  "R. ruber skin",
+  "E. prochilos gut",
+  "E. prochilos skin",
+  "Seawater"
+)
+
+#checking the number of genera detected in each group
+sapply(genus_sets_fig3, length)
+
+#convert to upset format
+upset_data_fig3 <- fromList(genus_sets_fig3)
 
 
-# Create the UpSet plot with custom styling
-pdf("upset_plot_all_v4.pdf", width = 9, height = 4.5, useDingbats = FALSE)
+upset_data_shared <- upset_data_fig3[
+  upset_data_fig3$Sponge == 1 &
+    rowSums(upset_data_fig3[, set_order]) >= 2,
+  ,
+  drop = FALSE
+]
+
+#plotting and saving upset plot
+cairo_pdf(file = "upset_plot_fig3.pdf", width = 9, height = 4.5)
 
 upset(
-  df_filtered, 
-  sets = c("seawater", "E.prochilos skin", "E.prochilos gut", "sponge", "Risor skin", "Risor gut"), 
-  sets.bar.color = "#CC6677",   # Custom bar color
-  order.by = "freq",           # Order intersections by frequency
-  empty.intersections = "off",  # Show empty sets
-  mainbar.y.label = "Intersection Size",  # Custom Y-axis label for main bar plot
-  sets.x.label = "Genus Count",           # Custom X-axis label for set size plot
-  text.scale = c(1.5, 1.5, 1.2, 1.2, 1.2, 1.0),  # Adjust text sizes (titles, axis, labels)
-  matrix.color = "#888888",  # Change the matrix dots to a custom color
-  point.size = 3.5,  # Increase the matrix point size
-  line.size = 1,  # Make intersection lines thicker
-  keep.order = TRUE,  # Keep the order of sets as defined
+  upset_data_shared,
+  
+  sets = c(
+    "E. prochilos gut",
+    "E. prochilos skin",
+    "Seawater",
+    "R. ruber gut",
+    "R. ruber skin",
+    "Sponge"
+  ),
+  
+  keep.order = TRUE,
+  nsets = 6,
+  nintersects = NA,
+  order.by = "freq",
+  
+  mainbar.y.label = "Number of genera",
+  sets.x.label = "Genera detected",
+  
+  main.bar.color = "#1D2D55",
+  sets.bar.color = "grey40",
+ # matrix.color = "#1D2D55",
+  
+  point.size = 3.5,
+  line.size = 1,
+  mb.ratio = c(0.65, 0.35),
+  
+  text.scale = c(
+    1.3,  # intersection-size title
+    1.1,  # intersection-size numbers
+    1.0,  # set-size title
+    1.0,  # set-size numbers
+    1.1,  # set names
+    1.0   # matrix labels
+  )
 )
 
 dev.off()
 
-#### Proportion shared (donut plot) - Figure 2B and 2C ####
+#### Figure 4 Key Shared Genera ####
 
-#Donut plot - SKIN
+fig4_long<- psmelt(physeq.fig3.g)
 
-#Selecting sponge IDs
-skin <- meta.all %>%
-  filter(grepl("^SBEL", sample_id))%>%
-  pull(sample_id)
+#calculate sponge prevalence - now staying with the 10% threhsold
+n_sponges <- fig4_long %>%
+  filter(type == "sponge") %>%
+  distinct(Sample) %>%
+  nrow()
 
-#Subset physeq object specific for sponges
-physeq_skin<- prune_samples(skin, physeq1.all.g.f)
+min_sponges_10 <- ceiling(0.10 * n_sponges)
 
-gen_skin<- otu_table(physeq_skin)
-gen_skin[gen_skin > 0] <- 1 #convert counts to presence/absence
-
-#Calculate the proportion of sponge samples each taxon is found in
-gen_prev.skin<- rowSums(gen_skin) / length(skin)
-
-gen_to_keep.01.skin<- taxa_names(physeq1.all.g)[gen_prev.skin >= 0.1]
-
-physeq1.all.g.01.skin<- prune_taxa(gen_to_keep.01.skin, physeq1.all.g)
-
-physeq_skin_type = merge_samples(physeq1.all.g.01.skin, "type")
-sample_data(physeq_skin_type)
-table_physeq.s <- t(otu_table(physeq_skin_type, ))
-
-table_physeq.s<- as.data.frame(table_physeq.s)
-table_physeq.s<- rownames_to_column(table_physeq.s)
-table_physeq.s<- table_physeq.s %>%
-  dplyr::rename(ASV = rowname)
-
-physeq_skin_tax<- tax_table(physeq1.all.g.01.skin)
-physeq_skin_tax<- as.data.frame(physeq_skin_tax)
-physeq_skin_tax<- rownames_to_column(physeq_skin_tax)
-physeq_skin_tax<- physeq_skin_tax %>%
-  dplyr::rename(ASV = rowname)
-
-tax_table_gen.s<- physeq_skin_tax %>%
-  inner_join(table_physeq.s, by = "ASV")%>%
-  select(ASV, Phylum, Class, Order, Family, Genus, Species, pident, `Risor skin`, `Risor gut`, `sponge`)
-
-filtered_tax_table_gen.skin.only<- tax_table_gen.s %>%
-  filter(`Risor skin` > 50) #209 genus
-write.csv(filtered_tax_table_gen.skin.only, "skin_only_genus.csv")
-
-tax_table_gen.all.f.skin #shared between risor skin and sponge >50 reads - 17
-
-count_skin.only<- nrow(filtered_tax_table_gen.skin.only)
-count_shared.s.s<- nrow(tax_table_gen.all.f.skin)
-
-# Create a data frame for visualization
-donut_data.skin <- data.frame(
-  Category = c("Risor skin & Sponge", "Risor skin"),
-  count = c(count_shared.s.s, count_skin.only - count_shared.s.s)
-)
-
-# Calculate percentages and cumulative values
-donut_data.skin$fraction <- donut_data.skin$count / sum(donut_data.skin$count)
-donut_data.skin$ymax <- cumsum(donut_data.skin$fraction)
-donut_data.skin$ymin <- c(0, head(donut_data.skin$ymax, n=-1))
-donut_data.skin$label_position <- (donut_data.skin$ymax + donut_data.skin$ymin) / 2  # Midpoint for text labels
-donut_data.skin$label_text <- paste0(round(donut_data.skin$fraction * 100, 1), "%")  # Percentage text
-
-# Create a donut plot - figure 2B
-donut_plot.skin <- ggplot(donut_data.skin, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 3, fill = Category)) +
-  geom_rect() +
-  geom_text(aes(x = 3.5, y = label_position, label = label_text), size = 5, color = "white") +  # Add percentage labels
-  coord_polar(theta = "y") +  # Convert to donut
-  xlim(c(2, 5)) +  # Adjust for donut shape
-  theme_void() +
-  scale_fill_manual(values = c("Risor skin & Sponge" = "black", "Risor skin" = "#DDCC77")) +
-  theme(legend.position = "none")  # Hide legend if not needed
-
-ggsave("Donut_plot_skin_filtered.pdf", donut_plot.skin , width = 8, height = 6, useDingbats = FALSE)
-
-#Donut plot - GUT
-
-#Selecting sponge IDs
-gut <- meta.all %>%
-  filter(grepl("^RBEL", sample_id))%>%
-  pull(sample_id)
-
-#Subset physeq object specific for sponges
-physeq_gut<- prune_samples(gut, physeq1.all.g.f)
-
-gen_gut<- otu_table(physeq_gut)
-gen_gut[gen_gut > 0] <- 1 #convert counts to presence/absence
-
-#Calculate the proportion of gut samples each taxon is found in
-gen_prev.gut<- rowSums(gen_gut) / length(gut)
-
-gen_to_keep.01.gut<- taxa_names(physeq1.all.g.f)[gen_prev.gut >= 0.1] #at least 10% of risor skin
-
-physeq1.all.g.01.gut<- prune_taxa(gen_to_keep.01.gut, physeq1.all.g.f) #Only 106 genera
-
-physeq_gut_type = merge_samples(physeq1.all.g.01.gut, "type")
-sample_data(physeq_gut_type)
-table_physeq.g <- t(otu_table(physeq_gut_type, ))
-
-table_physeq.g<- as.data.frame(table_physeq.g)
-table_physeq.g<- rownames_to_column(table_physeq.g)
-table_physeq.g<- table_physeq.g %>%
-  dplyr::rename(ASV = rowname)
-
-physeq_gut_tax<- tax_table(physeq1.all.g.01.gut)
-physeq_gut_tax<- as.data.frame(physeq_gut_tax)
-physeq_gut_tax<- rownames_to_column(physeq_gut_tax)
-physeq_gut_tax<- physeq_gut_tax %>%
-  dplyr::rename(ASV = rowname)
-
-tax_table_gen.g<- physeq_gut_tax %>%
-  inner_join(table_physeq.g, by = "ASV")%>%
-  select(ASV, Phylum, Class, Order, Family, Genus, Species, pident, `Risor gut`)
-
-filtered_tax_table_gen.gut.only<- tax_table_gen.g %>%
-  filter(`Risor gut` > 50) #103 genus
-#write.csv(filtered_tax_table_gen.gut.only, "skin_only_genus.csv")
-
-tax_table_gen.all.gut.f  #shared between risor gut and sponge - 11
-
-count_gut.only<- nrow(filtered_tax_table_gen.gut.only)
-count_shared.g.s<- nrow(tax_table_gen.all.gut.f)
-
-# Create a data frame for visualization
-donut_data.gut <- data.frame(
-  Category = c("Risor gut & Sponge", "Risor gut"),
-  count = c(count_shared.g.s, count_gut.only - count_shared.g.s)
-)
-
-# Calculate percentages and cumulative values
-donut_data.gut$fraction <- donut_data.gut$count / sum(donut_data.gut$count)
-donut_data.gut$ymax <- cumsum(donut_data.gut$fraction)
-donut_data.gut$ymin <- c(0, head(donut_data.gut$ymax, n=-1))
-donut_data.gut$label_position <- (donut_data.gut$ymax + donut_data.gut$ymin) / 2  # Midpoint for text labels
-donut_data.gut$label_text <- paste0(round(donut_data.gut$fraction * 100, 1), "%")  # Percentage text
-
-# Create a donut plot - Figure 2c
-donut_plot.gut <- ggplot(donut_data.gut, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 3, fill = Category)) +
-  geom_rect() +
-  geom_text(aes(x = 3.5, y = label_position, label = label_text), size = 5, color = "white") +  # Add percentage labels
-  coord_polar(theta = "y") +  # Convert to donut
-  xlim(c(2, 5)) +  # Adjust for donut shape
-  theme_void() +
-  scale_fill_manual(values = c("Risor gut & Sponge" = "black", "Risor gut" = "#44AA99")) +
-  theme(legend.position = "none")  # Hide legend if not needed
-
-ggsave("Donut_plot_gut_filtered.pdf", donut_plot.gut , width = 8, height = 6, useDingbats = FALSE)
-
-
-#### Key shared microbial genera (mirrored barplot) - Figure 4 ####
-
-##Read filtered phyloseq object - 594 genera
-physeq1.all.g.f
-
-##Filtering by sponge abundance before comparison
-
-#Selecting sponge IDs
-sponge <- meta.all %>%
-  filter(grepl("^IBEL", sample_id))%>%
-  pull(sample_id)
-
-#Subset physeq object specific for sponges
-physeq_sponge<- prune_samples(sponge, physeq1.all.g.f)
-
-#Compute presence/absence matrix for sponge samples
-gen_sponge<- otu_table(physeq_sponge)
-gen_sponge[gen_sponge > 0] <- 1 #convert counts to presence/absence
-
-#Calculate the proportion of sponge samples each taxon is found in
-gen_prev<- rowSums(gen_sponge) / length(sponge)
-
-#Select genera present from main physeq object in which at least x% of sponge samples 
-
-#For 10% of sponges
-gen_to_keep.01<- taxa_names(physeq1.all.g.f)[gen_prev >= 0.1]
-
-physeq1.all.g.01<- prune_taxa(gen_to_keep.01, physeq1.all.g.f) #Only 94 genera (97 when allowing for >10 reads)
-
-###Agglomerate by sample type ###
-
-#All
-physeq1.all.type = merge_samples(physeq1.all.g.f, "type")
-sample_data(physeq1.all.type)
-table_physeq.all <- t(otu_table(physeq1.all.type, ))
-
-#Only taxa present in at least 10% of sponges
-physeq1.all.type.01 = merge_samples(physeq1.all.g.01, "type")
-sample_data(physeq1.all.type.01)
-table_physeq.all.01 <- t(otu_table(physeq1.all.type.01, ))
-
-###saving df related to agglomerate###
-
-#All
-table_physeq1.all<- as.data.frame(table_physeq.all)
-table_physeq1.all<- rownames_to_column(table_physeq1.all)
-table_physeq1.all<- table_physeq1.all %>%
-  dplyr::rename(ASV = rowname)
-
-#Only taxa present in at least 10% of sponges
-table_physeq1.all.01<- as.data.frame(table_physeq.all.01)
-table_physeq1.all.01<- rownames_to_column(table_physeq1.all.01)
-table_physeq1.all.01<- table_physeq1.all.01 %>%
-  dplyr::rename(ASV = rowname)
-
-#All
-physeq1.tax.all<- tax_table(physeq1.all.g.f)
-physeq1.tax.all<- as.data.frame(physeq1.tax.all)
-physeq1.tax.all<- rownames_to_column(physeq1.tax.all)
-physeq1.tax.all<- physeq1.tax.all %>%
-  dplyr::rename(ASV = rowname)
-
-#Only taxa present in at least 10% of sponges
-physeq1.tax.all.01<- tax_table(physeq1.all.g.01)
-physeq1.tax.all.01<- as.data.frame(physeq1.tax.all.01)
-physeq1.tax.all.01<- rownames_to_column(physeq1.tax.all.01)
-physeq1.tax.all.01<- physeq1.tax.all.01 %>%
-  dplyr::rename(ASV = rowname)
-
-#All
-tax_table_gen.all<- physeq1.tax.all %>%
-  inner_join(table_physeq1.all, by = "ASV")%>%
-  dplyr::select(ASV, Phylum, Class, Order, Family, Genus, Species, pident, `Risor gut`, `Risor skin`, sponge, seawater, `E.prochilos gut`, `E.prochilos skin`)
-
-tax_table_gen.all.ra<- tax_table_gen.all%>%
+sponge_prevalence <- fig4_long %>%
+  filter(
+    type == "sponge",
+    Abundance > 0
+  ) %>%
+  distinct(Sample, OTU, Genus, Phylum, Family) %>%
+  count(
+    OTU,
+    Genus,
+    Phylum,
+    Family,
+    name = "n_sponges_present"
+  ) %>%
   mutate(
-    Risor_gut_ra = `Risor gut` / sum(`Risor gut`),
-    Sponge_ra = sponge / sum(sponge),
-    Risor_skin_ra = `Risor skin` / sum(`Risor skin`)) 
+    sponge_prevalence = n_sponges_present / n_sponges)
 
-#write.csv(tax_table_gen.all.ra, "all_Genera_table_ra.csv")
+#calculate pooled reads by sample type
+genus_counts <- fig4_long %>%
+  group_by(
+    OTU,
+    Genus,
+    Phylum,
+    Family,
+    type
+  ) %>%
+  summarise(
+    reads = sum(Abundance),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from = type,
+    values_from = reads,
+    values_fill = 0
+  ) %>%
+  left_join(
+    sponge_prevalence,
+    by = c("OTU", "Genus", "Phylum", "Family")
+  )
 
-#Only taxa present in at least 10% of sponges
-tax_table_gen.all.01<- physeq1.tax.all.01 %>%
-  inner_join(table_physeq1.all.01, by = "ASV")%>%
-  dplyr::select(ASV, Phylum, Class, Order, Family, Genus, Species, pident, `Risor gut`, `Risor skin`, sponge, seawater, `E.prochilos gut`, `E.prochilos skin`)
+#key gut and sponge
+key_gut <- genus_counts %>%
+  filter(
+    n_sponges_present >= min_sponges_10,
+    `Risor gut` > 50,
+    sponge > 50
+  )
 
-#Filtering out genus present in others than risor and sponge###
+#key skin and sponge
+key_skin <- genus_counts %>%
+  filter(
+    n_sponges_present >= min_sponges_10,
+    `Risor skin` > 50,
+    sponge > 50
+  )
 
-tax_table_gen.all.f <- tax_table_gen.all.01 %>%
-  filter(seawater <= 0, `E.prochilos gut` <= 0, `E.prochilos skin` <= 0) #24 genus total
+key_gut %>%
+  dplyr::select(Genus, n_sponges_present, `Risor gut`, sponge)
 
-#### RISOR GUT AND SPONGE
+key_skin %>%
+  dplyr::select(Genus, n_sponges_present, `Risor skin`, sponge)
 
-#Filter taxa that is shared between risor gut and sponge
-tax_table_gen.all.gut <- tax_table_gen.all.f %>%
-  filter(`Risor gut` > 0 & sponge > 0) #14
+#restricting to only Risor and sponge interactions
+key_gut_filtered <- key_gut %>%
+  filter(
+    seawater == 0,
+    `E.prochilos gut` == 0,
+    `E.prochilos skin` == 0,
+    sponge > `Risor gut`)%>%
+  mutate(
+    Risor_gut_reads = `Risor gut`,
+    Sponge_reads = sponge,
+    Risor_gut_RA = Risor_gut_reads / sum(Risor_gut_reads),
+    Sponge_RA = Sponge_reads / sum(Sponge_reads)
+  )%>%
+  filter(!(Genus == "EF100-94H03"))
 
-#Filter taxa that is shared meaningful shared between risor gut and sponge (>50 reads)
-tax_table_gen.all.gut.f <- tax_table_gen.all.gut %>%
-  filter(`Risor gut` > 50 & sponge > 50) #11 genus
+key_skin_filtered <- key_skin %>%
+  filter(
+    seawater == 0,
+    `E.prochilos gut` == 0,
+    `E.prochilos skin` == 0,
+    sponge > `Risor skin`)%>%
+  mutate(
+    Risor_skin_reads = `Risor skin`,
+    Sponge_reads = sponge,
+    Risor_skin_RA = Risor_skin_reads / sum(Risor_skin_reads),
+    Sponge_RA = Sponge_reads / sum(Sponge_reads)
+  )%>%
+  filter(!(Genus == "Microbulbifer"))%>%
+  filter(!(Genus == "Fulvivirga"))
 
-#write.csv(tax_table_gen.all.gut.f, "key_shared_gut.csv")
+key_shared_all <- bind_rows(
+  key_gut_filtered,
+  key_skin_filtered)
 
-#Calculating relative abundance
-aggregated_tax_table_gen.gut <- tax_table_gen.all.gut.f  %>%
-  group_by(Genus, Phylum, Family) %>%  # Include Phylum in the grouping
-  summarize(
-    gut = sum(`Risor gut`, na.rm = TRUE),
+write_tsv(key_shared_all, "key_shared_all.tsv")
+
+#calculate relative abundance
+
+plot_gut <- key_gut_filtered %>%
+  mutate(
+    Risor_gut_reads = `Risor gut`,
+    Sponge_reads = sponge,
+    Risor_gut_RA = Risor_gut_reads / sum(Risor_gut_reads),
+    Sponge_RA = Sponge_reads / sum(Sponge_reads)
+  )%>%
+  filter(!(Genus == "EF100-94H03"))
+
+plot_skin <- key_skin_filtered %>%
+  mutate(
+    Risor_skin_reads = `Risor skin`,
+    Sponge_reads = sponge,
+    Risor_skin_RA = Risor_skin_reads / sum(Risor_skin_reads),
+    Sponge_RA = Sponge_reads / sum(Sponge_reads)
+  )%>%
+  filter(!(Genus == "Microbulbifer"))%>%
+  filter(!(Genus == "Fulvivirga"))
+
+
+
+
+selected_reads <- key_shared_all %>%
+  summarise(
+    `Risor gut` = sum(`Risor gut`, na.rm = TRUE),
+    `Risor skin` = sum(`Risor skin`, na.rm = TRUE),
     sponge = sum(sponge, na.rm = TRUE)
   ) %>%
-  mutate(total_ab = gut + sponge) %>%
-  ungroup()
+  pivot_longer(
+    everything(),
+    names_to = "type",
+    values_to = "selected_reads"
+  )
 
-aggregated_tax_table_gen.gut.ra <- aggregated_tax_table_gen.gut %>%
+total_reads <- fig4_long %>%
+  filter(type %in% c("Risor gut", "Risor skin", "sponge")) %>%
+  group_by(type) %>%
+  summarise(
+    total_reads = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+read_representation <- selected_reads %>%
+  left_join(total_reads, by = "type") %>%
   mutate(
-    `Risor gut` = gut / sum(gut),
-    Sponge = sponge / sum(sponge)) %>%
-  filter(!(Genus == "Cm1-21")) %>%
-  filter(!(Genus == "Cohaesibacter"))
+    percent_reads = 100 * selected_reads / total_reads
+  )
 
-#write.csv(aggregated_tax_table_gen.gut.ra, "key_shared_gut2.csv")
+read_representation
 
-#Plotting mirrored barplot
+read_representation %>%
+  mutate(percent_reads = round(percent_reads, 2))
 
-long_data_mirrored.gut <- aggregated_tax_table_gen.gut.ra %>%
-  mutate(Family = ifelse(Family == "PAUC43f_marine_benthic_group", "PAUC43f", Family))%>%
-  mutate(Family = ifelse(Family == "BD2-11_terrestrial_group", "BD2-11", Family))%>%
-  mutate(Genus = ifelse(Genus == "PAUC43f_marine_benthic_group", "PAUC43f_marine", Genus))%>%
-  mutate(Genus = ifelse(Genus == "BD2-11_terrestrial_group", "BD2-11_terrestrial", Genus))%>%
-  mutate(Phylum_Genus = paste(Phylum, Family, Genus, sep = ":")) %>% # Combine Phylum and Genus
-  arrange(total_ab) %>% # Sort by ra_diff
-  mutate(Phylum_Genus = factor(Phylum_Genus, levels = unique(Phylum_Genus))) %>% # Factorize with sorted levels
-  dplyr::select(Phylum_Genus, `Risor gut`, Sponge) %>%
-  pivot_longer(cols = c(`Risor gut`, Sponge), names_to = "Sample_Type", values_to = "Occurrences") %>%
-  mutate(Occurrences = if_else(Sample_Type == "Risor gut", -Occurrences, Occurrences)) # Mirror Risor skin
+#Adjust data for plotting
+
+#Skin
+long_data_mirrored.skin <- plot_skin %>%
+  mutate(
+    Family = case_when(
+      Family == "PAUC43f_marine_benthic_group" ~ "PAUC43f",
+      Family == "BD2-11_terrestrial_group" ~ "BD2-11",
+      TRUE ~ Family
+    ),
+    
+    Genus = case_when(
+      Genus == "PAUC43f_marine_benthic_group" ~ "PAUC43f_marine",
+      Genus == "BD2-11_terrestrial_group" ~ "BD2-11_terrestrial",
+      TRUE ~ Genus
+    ),
+    
+    Phylum_Genus = paste(Phylum, Family, Genus, sep = ":"),
+    total_ab = Risor_skin_reads + Sponge_reads
+  ) %>%
+  arrange(total_ab) %>%
+  mutate(
+    Phylum_Genus = factor(
+      Phylum_Genus,
+      levels = unique(Phylum_Genus)
+    )
+  ) %>%
+  dplyr::select(
+    Phylum_Genus,
+    Risor_skin_RA,
+    Sponge_RA
+  ) %>%
+  pivot_longer(
+    cols = c(Risor_skin_RA, Sponge_RA),
+    names_to = "Sample_Type",
+    values_to = "Occurrences"
+  ) %>%
+  mutate(
+    Sample_Type = recode(
+      Sample_Type,
+      Risor_skin_RA = "Risor skin",
+      Sponge_RA = "Sponge"
+    ),
+    
+    Occurrences = if_else(
+      Sample_Type == "Risor skin",
+      -Occurrences,
+      Occurrences
+    )
+  )
 
 # Plotting the mirrored barplot - Figure 4b
+shared_barplot.skin <- ggplot(long_data_mirrored.skin, aes(x = Occurrences, y = Phylum_Genus, fill = Sample_Type)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(labels = abs, expand = c(0, 0)) +
+  scale_fill_manual(values = c("#DDCC77","#1D2D55")) + 
+  labs(
+    x = "Relative abundance",
+    fill = "Sample Type"
+  ) +
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+
+ggsave("Shared.genus.skin.sponge.filtered.pdf", shared_barplot.skin , width = 8, height = 6, useDingbats = FALSE)
+
+#Adjust data for plotting - gut
+
+long_data_mirrored.gut <- plot_gut %>%
+  mutate(
+    Family = case_when(
+      Family == "PAUC43f_marine_benthic_group" ~ "PAUC43f",
+      Family == "BD2-11_terrestrial_group" ~ "BD2-11",
+      TRUE ~ Family
+    ),
+    
+    Genus = case_when(
+      Genus == "PAUC43f_marine_benthic_group" ~ "PAUC43f_marine",
+      Genus == "BD2-11_terrestrial_group" ~ "BD2-11_terrestrial",
+      TRUE ~ Genus
+    ),
+    
+    Phylum_Genus = paste(Phylum, Family, Genus, sep = ":"),
+    total_ab = Risor_gut_reads + Sponge_reads
+  ) %>%
+  arrange(total_ab) %>%
+  mutate(
+    Phylum_Genus = factor(
+      Phylum_Genus,
+      levels = unique(Phylum_Genus)
+    )
+  ) %>%
+  dplyr::select(
+    Phylum_Genus,
+    Risor_gut_RA,
+    Sponge_RA
+  ) %>%
+  pivot_longer(
+    cols = c(Risor_gut_RA, Sponge_RA),
+    names_to = "Sample_Type",
+    values_to = "Occurrences"
+  ) %>%
+  mutate(
+    Sample_Type = recode(
+      Sample_Type,
+      Risor_gut_RA = "Risor gut",
+      Sponge_RA = "Sponge"
+    ),
+    
+    Occurrences = if_else(
+      Sample_Type == "Risor gut",
+      -Occurrences,
+      Occurrences
+    )
+  )
+
+# Plotting the mirrored barplot 
 shared_barplot.gut <- ggplot(long_data_mirrored.gut, aes(x = Occurrences, y = Phylum_Genus, fill = Sample_Type)) +
   geom_bar(stat = "identity") +
   scale_x_continuous(labels = abs, expand = c(0, 0)) +
-  scale_fill_manual(values = c("#44AA99","#661100")) + 
+  scale_fill_manual(values = c("#44AA99","#1D2D55")) + 
   labs(
     x = "Relative abundance",
     fill = "Sample Type"
@@ -746,67 +1254,6 @@ shared_barplot.gut <- ggplot(long_data_mirrored.gut, aes(x = Occurrences, y = Ph
 
 ggsave("Shared.genus.gut.sponge.filtered.pdf", shared_barplot.gut , width = 8, height = 6, useDingbats = FALSE)
 
-### RISOR SKIN AND SPONGE
 
-#Filter taxa that is shared between risor skin and sponge
-tax_table_gen.all.f.skin <- tax_table_gen.all.f %>%
-  filter(`Risor skin` > 0 & sponge > 0) #19 genus (20 when filtering for 10 reads)
 
-#Filter taxa that is shared meaningful shared between risor skin and sponge (>50 reads)
-tax_table_gen.all.f.skin<- tax_table_gen.all.f.skin %>%
-  filter(`Risor skin` > 50 & sponge > 50) #17 genus
 
-#write.csv(tax_table_gen.all.f.skin, "key_shared_skin.csv")
-
-#Filter taxa that is bigger in the sponge than risor skin
-tax_table_gen.all.f.skin <- tax_table_gen.all.f.skin %>%
-  filter(sponge > `Risor skin`) #11 genus
-
-#Calculating relative abundance
-
-aggregated_tax_table_gen.skin <- tax_table_gen.all.f.skin %>%
-  #select(-c(ASV, Class, Order, Species)) %>%
-  group_by(Genus, Phylum, Family) %>%  #Include Phylum in the grouping
-  summarize(
-    skin = sum(`Risor skin`, na.rm = TRUE),
-    sponge = sum(sponge, na.rm = TRUE),
-  ) %>%
-  mutate(total_ab = skin + sponge) %>%
-  ungroup()
-
-aggregated_tax_table_gen.skin.ra <- aggregated_tax_table_gen.skin %>%
-  mutate(
-    `Risor skin` = skin / sum(skin),
-    Sponge = sponge / sum(sponge))%>%
-  filter(!(Genus == "Microbulbifer"))%>%
-  filter(!(Genus == "Fulvivirga"))
-
-#write.csv(aggregated_tax_table_gen.skin.ra, "key_shared_skin2.csv")
-
-#Plotting mirrored barplot - Figure 4
-
-long_data_mirrored.skin <- aggregated_tax_table_gen.skin.ra %>%
-  mutate(Phylum_Genus = paste(Phylum, Family, Genus, sep = ":")) %>% # Combine Phylum and Genus
-  arrange(total_ab) %>% # Sort by ra_diff
-  mutate(Phylum_Genus = factor(Phylum_Genus, levels = unique(Phylum_Genus))) %>% # Factorize with sorted levels
-  select(Phylum_Genus, `Risor skin`, Sponge) %>%
-  pivot_longer(cols = c(`Risor skin`, Sponge), names_to = "Sample_Type", values_to = "Occurrences") %>%
-  mutate(Occurrences = if_else(Sample_Type == "Risor skin", -Occurrences, Occurrences)) # Mirror Risor skin
-
-# Plotting the mirrored barplot - Figure 4a
-shared_barplot.skin <- ggplot(long_data_mirrored.skin, aes(x = Occurrences, y = Phylum_Genus, fill = Sample_Type)) +
-  geom_bar(stat = "identity") +
-  scale_x_continuous(labels = abs, expand = c(0, 0)) +
-  scale_fill_manual(values = c("#DDCC77","#661100")) + 
-  labs(
-    x = "Relative abundance",
-    fill = "Sample Type"
-  ) +
-  theme_classic() +
-  theme(
-    legend.position = "top",
-    panel.grid.minor = element_blank(),
-    panel.grid.major.y = element_blank()
-  )
-
-ggsave("Shared.genus.skin.sponge.filtered.pdf", shared_barplot.skin , width = 8, height = 6, useDingbats = FALSE)

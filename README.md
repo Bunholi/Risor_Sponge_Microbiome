@@ -29,22 +29,20 @@ The elements of this project include:
 
 *Main metadata generation*
 
-- filtered-table-all.qza: qiime2 object with raw ASVs for all sample types
+- merged-rep-seqs-all.qza: qiime2 object with raw ASVs and sequences
+- no-archeaea-table.qza: qiime2 object with ASVs for all sample types excluding archeaea hits
 - taxonomy-all.qza: qiime2 objecte with raw taxonomy assingment after filtration in qiime2
 - mdat_all.tsv: Raw sample metadata with additional information for each sample (e.g., depth of collection, speciment total length, lat/long)
 - tophits-all.tsv: file with vsearch metrics generated in qiime2
 - tree.nwk: phylogenetic tree with raw ASVs generated in qiime2
-- asv.all.filtered.csv: Raw ASV table after filtration in qiime2. This file contains all sample types
-- taxon.all.filtered.csv: Raw taxonomy assingment after filtration in qiime2.
-- genus.filtered.50ab.original.csv: final ASV dataset after all filtration steps grouped by genus for all sample types.
-- metadata_filtered_all_2000.csv: metadata only for samples with acceptable sequencing depth. 
+- processed_objects: .rds phyloseq objects for each filtration step
 
 *Scripts*
 
 - microbiome_script.sh: includes qiime2 QC and taxonomy assingment
-- RisorMicrobiome_Cleaning_Filtering.R: includes taxonomy curation and additional filtration (e.g., negative controls, sequencing depth)
-- RisorMicrobiome_Diversity_Sharedness.R: includes alpha/beta diversity and sharedness among samples (Figure 1 and 2, and 4)
-- RisorMicrobiome_Null_ModelR: includes functions and null model analysis (Figure 3)
+- RisorSponge_Microbiome_Cleaning&Filtering.R: includes taxonomy curation and additional filtration (e.g., negative controls, sequencing depth)
+- RisorMicrobiome_Diversity_Sharedness.R: includes alpha/beta diversity and sharedness among samples (Figure 1, 2, 3, and 4)
+- RisorMicrobiome_Null_ModelR: includes functions and null model analysis (Figure 2C)
 - RisorMicrobiome_Matrix_and_model_ontogeny.R: includes pairwise analysis and bayesian model of relative abundance and body size (Figure 5)
 
 **METHODOLOGICAL INFORMATION**
@@ -69,7 +67,7 @@ The elements of this project include:
 
 - Pipeline: QIIME2 v2024.5 for QC and ASV taxonomy.
 
-- Comparators: (i) Elacatinus prochilos skin/gut from 23 fish (Xavier et al. 2019); (ii) six seawater samples from Carrie Bow Cay (Gantt et al. 2019). Analyzed alongside our R. ruber–Ircinia samples to test whether microbial overlap differs from another goby and from the environment.
+- Ecological comparison: (i) Elacatinus prochilos skin/gut from 23 fish (Xavier et al. 2019); (ii) six seawater samples from Carrie Bow Cay (Gantt et al. 2019). Analyzed alongside our R. ruber–Ircinia samples to test whether microbial overlap differs from another goby and from the environment.
 
 - Taxonomy thresholds: ≥97% for genus/species; ≥85% for family–class; ≥70% for phylum. ASVs were annotated to the highest rank meeting these cutoffs.
 
